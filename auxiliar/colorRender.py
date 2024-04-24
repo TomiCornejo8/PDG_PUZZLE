@@ -3,9 +3,6 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
-
-
-
 def html_to_argb(html_color):
     # Reorganizar el código de color HTML para que sea compatible con openpyxl (RRGGBB a AABBGGRR)
     hex_color = html_color[1:]
@@ -38,4 +35,4 @@ def renderMatrix(map):
                 hoja.cell(row=fila_idx, column=celda_idx).fill = relleno
 
     # Guardar los cambios en el archivo Excel
-    wb.save("matriz_con_celda_pintada.xlsx")
+    wb.save("results/matriz_con_celda_pintada.xlsx")

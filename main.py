@@ -16,9 +16,8 @@ voidSpace = np.argwhere(map == 0)
 player = voidSpace[np.random.choice(len(voidSpace))]
 map[player[0],player[1]] = 5
 
-np.savetxt('result.csv', map, delimiter=',', fmt='%d')
+np.savetxt('results/result.csv', map, delimiter=',', fmt='%d')
 
 print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos")
 
 color.renderMatrix(map)
-
