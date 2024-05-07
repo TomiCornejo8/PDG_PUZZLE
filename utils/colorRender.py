@@ -37,5 +37,7 @@ def renderMatrix(map):
                 hoja.cell(row=fila_idx, column=celda_idx).fill = relleno
 
     # Guardar los cambios en el archivo Excel
-    now = str(datetime.now())
-    wb.save(f"results/matriz_con_celda_pintada.xlsx")
+    now = datetime.now()
+    formato_fecha = now.strftime("%m-%d_%H-%M-%S")
+    nArchivo = "matriz_con_celda_pintada "+ formato_fecha + ".xlsx"
+    wb.save(f"results/{nArchivo}")

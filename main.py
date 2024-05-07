@@ -5,6 +5,7 @@ import time as T
 # Imports propios
 from modules import scenarioFiller as SF
 from modules import movements as M
+from modules import reverse as R
 from utils import colorRender as color
 
 # MAIN
@@ -14,15 +15,16 @@ print(f"Se inicia la generación del mapa")
 enemyFactor =  0.085
 blockFactor = 0.05
 maxMoves = 1000
-nHight = 10
-mWidth = 10
+nHight = 5
+mWidth = 5
 expantionFactor = 0.1
 
-map = SF.scenarioFiller(nHight,mWidth,expantionFactor)
-map,player = M.getMap(map,maxMoves,blockFactor,enemyFactor)
-map = np.array(map)
+dungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
+print(dungeon)
+#dungeon,player = M.getDungeon(dungeon,maxMoves,blockFactor,enemyFactor)
+dungeon = np.array(dungeon)
 
-np.savetxt('results/result.csv', map, delimiter=',', fmt='%d')
-color.renderMatrix(map)
+#np.savetxt('results/result.csv', dungeon, delimiter=',', fmt='%d')
+#color.renderMatrix(dungeon)
 
 print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos")
