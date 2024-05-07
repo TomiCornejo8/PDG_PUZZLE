@@ -3,21 +3,26 @@ import numpy as np
 import time as T
 
 # Imports propios
-from modules import ScenarioFiller as SF
-from auxiliar import colorRender as color
+from modules import scenarioFiller as SF
+from modules import movements as M
+from utils import colorRender as color
 
 # MAIN
 inicio = T.time()
 print(f"Se inicia la generación del mapa")
 
-map = SF.scenarioFiller(100,100,0.5)
+enemyFactor =  0.085
+blockFactor = 0.05
+maxMoves = 1000
+nHight = 10
+mWidth = 10
+expantionFactor = 0.1
 
-voidSpace = np.argwhere(map == 0)
-player = voidSpace[np.random.choice(len(voidSpace))]
-map[player[0],player[1]] = 5
+map = SF.scenarioFiller(nHight,mWidth,expantionFactor)
+map,player = M.getMap(map,maxMoves,blockFactor,enemyFactor)
+map = np.array(map)
 
 np.savetxt('results/result.csv', map, delimiter=',', fmt='%d')
+color.renderMatrix(map)
 
 print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos")
-
-color.renderMatrix(map)
