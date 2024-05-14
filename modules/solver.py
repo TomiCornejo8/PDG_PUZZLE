@@ -78,4 +78,4 @@ def solve(dungeon):
                 solutions.append(getRoutes(Node(newDungeon,parent=currentNode)))
             else:
                 routes,memoryStates = setRoutes(routes,memoryStates,newDungeon,currentNode)
-    return solutions,root
+    return solutions

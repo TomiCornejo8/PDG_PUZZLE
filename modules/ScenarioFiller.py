@@ -1,5 +1,59 @@
 import numpy as np
+import random
+
 from modules import mechanics as M
+
+def setRandomPlayer(dungeon):
+    empty = np.argwhere(dungeon == M.EMPTY)
+    player = random.choice(empty)
+    dungeon[player[0],player[1]] = M.PLAYER
+    return dungeon
+
+def getAdjacentWalls(dungeon):
+    # Obtener las posiciones de los 1s en la dungeon
+    walls = np.argwhere(dungeon == M.WALL)
+    adjacentWalls = []
+
+    for i, j in walls:
+        # Verificar si el 1 está adyacente a un 0 en forma de cruz
+        if (i > 0 and dungeon[i-1][j] == M.EMPTY) or \
+           (i < dungeon.shape[0]-1 and dungeon[i+1][j] == M.EMPTY) or \
+           (j > 0 and dungeon[i][j-1] == 0) or \
+           (j < dungeon.shape[1]-1 and dungeon[i][j+1] == M.EMPTY):
+            adjacentWalls.append((i, j))
+
+    return adjacentWalls
+
+def setDoor(dungeon):
+    allowDoorPosition = getAdjacentWalls(dungeon)
+    door = random.choice(allowDoorPosition)
+    dungeon[door[0],door[1]] = M.DOOR
+    return dungeon
+
+def setBlocksAndEnemys(dungeon,enemyFactor,blockFactor):
+    empty = np.argwhere(dungeon == M.EMPTY)
+    nEmpty = len(empty)
+    nEnemys = nEmpty * enemyFactor
+    nBlocks = nEmpty * blockFactor
+    
+    for _ in range(int(nEnemys)):
+        enemy = random.choice(empty)
+        dungeon[enemy[0],enemy[1]] = M.ENEMY
+        empty = np.argwhere(dungeon == M.EMPTY)
+    
+    for _ in range(int(nBlocks)):
+        block = random.choice(empty)
+        dungeon[block[0],block[1]] = M.BLOCK
+        empty = np.argwhere(dungeon == M.EMPTY)
+    
+    return dungeon
+
+def getIntialSol(dungeon,enemyFactor,blockFactor):
+    dungeon = setRandomPlayer(dungeon)
+    dungeon = setDoor(dungeon)
+    dungeon = setBlocksAndEnemys(dungeon,enemyFactor,blockFactor)
+    
+    return dungeon
 
 def scenarioFiller(n, m, expansion_factor):
     """

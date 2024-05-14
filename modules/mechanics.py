@@ -8,6 +8,8 @@ DOWN = (1,0)
 STAY = (0,0)
 
 moves = [RIGHT,LEFT,UP,DOWN]
+X = [LEFT,RIGHT]
+Y = [UP,DOWN]
 
 EMPTY = 0
 WALL = 1
@@ -17,7 +19,6 @@ DOOR = 4
 PLAYER = 5
 
 TRAIL = 6
-WAY = 7
 
 # Functions
 def lookAhead(player,move):

@@ -38,6 +38,6 @@ def renderMatrix(map):
 
     # Guardar los cambios en el archivo Excel
     now = datetime.now()
-    formato_fecha = now.strftime("%m-%d_%H-%M-%S")
-    nArchivo = "matriz_con_celda_pintada "+ formato_fecha + ".xlsx"
+    formato_fecha = now.strftime("%d-%m_%H-%M-%S")
+    nArchivo = "Dungeon "+ formato_fecha + ".xlsx"
     wb.save(f"results/{nArchivo}")
