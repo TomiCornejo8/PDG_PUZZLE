@@ -25,8 +25,14 @@ def lookAhead(player,move):
     return [player[0]+move[0],player[1]+move[1]]
 
 def iceSliding(dungeon,player,move):
-    while dungeon[lookAhead(player,move)[0],lookAhead(player,move)[1]] == EMPTY: player = lookAhead(player,move)
-    return player
+    dungeon[player[0],player[1]] = EMPTY
+
+    while dungeon[lookAhead(player,move)[0],lookAhead(player,move)[1]] == EMPTY: 
+        player = lookAhead(player,move)
+        
+    dungeon[player[0],player[1]] = PLAYER
+
+    return dungeon
 
 def killEnemy(dungeon,enemy):
     dungeon[enemy[0],enemy[1]] = EMPTY
@@ -37,8 +43,10 @@ def getAllowMoves(dungeon,player):
     newMoves = []
     for move in moves:
         tile = lookAhead(player,move)
-        if not dungeon[tile[0],tile[1]] in notAllow:
+        dungeonTile = dungeon[tile[0],tile[1]]
+        if not dungeonTile in notAllow:
             newMoves.append(move)
+
     return newMoves
 
 def getMeleeEnemys(dungeon,player):

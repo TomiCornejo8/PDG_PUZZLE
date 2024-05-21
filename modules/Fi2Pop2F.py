@@ -5,71 +5,19 @@ from modules import mechanics as M
 from modules import solver
 
 class Individual:
-    def __init__(self, solution, fitness):
+    def __init__(self, solution, fitness,nSol,minMoves):
         self.solution = solution
         self.fitness = fitness
+        self.nSol = nSol
+        self.minMoves = minMoves
 
-"""
-Función de Objetivo de Equilibrio de Obstáculos:
-    Esta función mide el balance entre los diferentes tipos de obstáculos (bloques, enemigos, paredes)
-    en el mapa.
-"""
-def fitness_obstacle_balance(dungeon):
-    total_cells = dungeon.size
-    num_blocks = np.sum(dungeon == M.BLOCK)
-    num_enemies = np.sum(dungeon == M.ENEMY)
-    return 1 - abs(num_blocks / total_cells - num_enemies / total_cells)
-
-"""
-Función de Objetivo de Distancia Promedio al Enemigo:
-    Esta función mide la distancia promedio desde cada celda del jugador 
-    a los enemigos. Un mapa donde los enemigos están demasiado lejos puede ser menos desafiante.
-    Ahora modificada para aumentar la distancia.
-"""
-def fitness_enemy_distance(dungeon):
-    player_pos = np.argwhere(dungeon == M.PLAYER)[0]
-    enemy_positions = np.argwhere(dungeon == M.ENEMY)
-    if enemy_positions.size == 0:
-        return 0
-    distances = [np.linalg.norm(player_pos - enemy) for enemy in enemy_positions]
-    avg_distance = np.mean(distances)
-    return avg_distance
-
-"""
-Función de Objetivo de Distancia a la Puerta:
-    Esta función mide la distancia desde el jugador a la puerta. 
-    Una mayor distancia puede hacer el juego más desafiante.
-"""
-def fitness_door_distance(dungeon):
-    player_pos = np.argwhere(dungeon == M.PLAYER)[0]
-    door_pos = np.argwhere(dungeon == M.DOOR)[0]
-    distance = np.linalg.norm(player_pos - door_pos)
-    return distance
-
-"""
-Función de Objetivo de Cercanía de los Bloques:
-    Esta función mide la cercanía de los bloques al jugador.
-    Una menor distancia puede hacer el juego más desafiante.
-"""
-def fitness_block_proximity(dungeon):
-    player_pos = np.argwhere(dungeon == M.PLAYER)[0]
-    block_positions = np.argwhere(dungeon == M.BLOCK)
-    if block_positions.size == 0:
-        return 0
-    distances = [np.linalg.norm(player_pos - block) for block in block_positions]
-    avg_distance = np.mean(distances)
-    return 1 / avg_distance if avg_distance > 0 else 0
-
-def fitness(dungeon, w1=1.0, w2=0.1, w3=0.8, w4=0.1):
-    fitness_ob = fitness_obstacle_balance(dungeon)
-    fitness_ed = fitness_enemy_distance(dungeon)
-    fitness_dd = fitness_door_distance(dungeon)
-    fitness_bp = fitness_block_proximity(dungeon)
-    
-    # Combining the fitness scores
-    # combined_score = w1 * fitness_ob + w2 * fitness_ed + w3 * fitness_dd + w4 * fitness_bp
-    combined_score = w1 * fitness_ob  + w3 * fitness_dd + w4 * fitness_bp
+def fitness(nSol, minMoves, w1= 1 , w2 = 1):
+    combined_score = w2 * minMoves - w1 * nSol
     return combined_score
+
+def isFeasible(nSol):
+    if nSol > 0: return True
+    return False
 
 def repairDoors(child1,child2):
     doors1 = np.argwhere(child1 == M.DOOR)
@@ -184,19 +132,15 @@ def tournamentSelection(feapop, infpop, mutation = False):
     
     return parent1.solution, parent2.solution
 
-def isFeasible(dungeon):
-    solutions = solver.solve(dungeon.copy())
-    if len(solutions) == 0: return False
-    return True
-
 def initialPopulation(population):
     feapop = []
     infpop = []
     for dungeon in population:
-        if isFeasible(dungeon):
-            feapop.append(Individual(dungeon,fitness(dungeon)))
+        nSol,minMoves = solver.nSolutions(dungeon)
+        if isFeasible(nSol):
+            feapop.append(Individual(dungeon,fitness(nSol,minMoves),nSol,minMoves))
         else:
-            infpop.append(Individual(dungeon,fitness(dungeon)))
+            infpop.append(Individual(dungeon,fitness(nSol,minMoves),nSol,minMoves))
     return np.array(feapop),np.array(infpop)
 
 def elitism(population,nPop):
@@ -228,11 +172,12 @@ def FI2Pop(population,maxIter, nPop,mutationFactor):
                 offspring.append(child2)
             
             for dungeon in offspring:
-                if isFeasible(dungeon) and len(feaoffspring) < nPop:
-                    feaoffspring.append(Individual(dungeon,fitness(dungeon)))
+                nSol,minMoves = solver.nSolutions(dungeon)
+                if isFeasible(nSol) and len(feaoffspring) < nPop:
+                    feaoffspring.append(Individual(dungeon,fitness(nSol,minMoves),nSol,minMoves))
                 else:
                     if len(infoffspring) < nPop:
-                        infoffspring.append(Individual(dungeon,fitness(dungeon)))
+                        infoffspring.append(Individual(dungeon,fitness(nSol,minMoves),nSol,minMoves))
         
         feapop = np.concatenate((feapop, np.array(feaoffspring)), axis=0)
         infpop = np.concatenate((infpop, np.array(infoffspring)), axis=0)
@@ -240,6 +185,6 @@ def FI2Pop(population,maxIter, nPop,mutationFactor):
         feapop = elitism(feapop,nPop)
         infpop = elitism(infpop,nPop)
 
-        print(f"iter = {it} BestFitness = {feapop[0].fitness}")
+        print(f"iter = {it} BestFitness = {feapop[0].fitness} N.solu = {feapop[0].nSol} N.Movi = {feapop[0].minMoves}")
     
     return feapop[0].solution,feapop[0].fitness
