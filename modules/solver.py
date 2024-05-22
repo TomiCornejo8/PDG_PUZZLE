@@ -2,7 +2,6 @@
 import numpy as np
 from anytree import Node
 from collections import deque
-import copy 
 
 # Internal
 from modules import mechanics as M

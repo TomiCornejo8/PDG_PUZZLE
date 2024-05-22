@@ -1,5 +1,3 @@
-import numpy as np
-
 # Moves
 RIGHT = (0,1)
 LEFT = (0,-1)

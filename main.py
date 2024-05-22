@@ -1,5 +1,4 @@
 # Imports externos
-import numpy as np
 import time as T
 
 # Imports propios
@@ -10,12 +9,16 @@ from utils import colorRender as color
 # CONFIG
 nHight = 10
 mWidth = 10
+
 expantionFactor = 0.1
-enemyFactor =  0.09
-blockFactor = 0.083
-maxIter = 5
-nPop = 10
+enemyFactor =  0.08
+blockFactor = 0.08
+
+nPop = 20
 mutationFactor = 0.5
+
+maxIter = 100
+maxMoves = 30
 experiments = 1
 
 # MAIN
@@ -29,7 +32,7 @@ for i in range(1,experiments+1):
     population = []
     for _ in range(nPop*2):
         population.append(SF.getIntialSol(borderDungeon.copy(),enemyFactor,blockFactor))
-    dungeon, fitness , nSol, minMoves = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor)
+    dungeon, fitness , nSol, minMoves = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor,maxMoves)
     
     color.renderMatrix(dungeon,fitness, nSol, minMoves)
 

@@ -148,10 +148,11 @@ def elitism(population,nPop):
     population = population[:nPop]
     return np.array(population)
 
-def FI2Pop(population,maxIter, nPop,mutationFactor):
+def FI2Pop(population,maxIter, nPop,mutationFactor,maxMoves):
     feapop, infpop = initialPopulation(population)
-    
-    for it in range(1,maxIter+1):
+    it = 0
+
+    while True:
         feaoffspring = []
         infoffspring = []
         
@@ -184,7 +185,10 @@ def FI2Pop(population,maxIter, nPop,mutationFactor):
 
         feapop = elitism(feapop,nPop)
         infpop = elitism(infpop,nPop)
-
+        
+        it += 1
         print(f"iter = {it} BestFitness = {feapop[0].fitness} N.solu = {feapop[0].nSol} N.Movi = {feapop[0].minMoves}")
+
+        if feapop[0].minMoves >= maxMoves or it > maxIter: break
     
     return feapop[0].solution,feapop[0].fitness ,feapop[0].nSol, feapop[0].minMoves
