@@ -5,20 +5,20 @@ import time as T
 from modules import ScenarioFiller as SF
 from modules import Fi2Pop
 from utils import colorRender as color
-
+from modules import solver as sol
 # CONFIG
 nHight = 10
 mWidth = 10
 
 expantionFactor = 0.1
 enemyFactor =  0.08
-blockFactor = 0.08
+blockFactor = 0.15
 
-nPop = 20
+nPop = 5
 mutationFactor = 0.5
 
-maxIter = 100
-maxMoves = 30
+maxIter = 1
+maxMoves = 25
 experiments = 1
 
 # MAIN
@@ -33,7 +33,6 @@ for i in range(1,experiments+1):
     for _ in range(nPop*2):
         population.append(SF.getIntialSol(borderDungeon.copy(),enemyFactor,blockFactor))
     dungeon, fitness , nSol, minMoves = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor,maxMoves)
-    
     color.renderMatrix(dungeon,fitness, nSol, minMoves)
 
 
