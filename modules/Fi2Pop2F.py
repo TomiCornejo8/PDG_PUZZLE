@@ -187,4 +187,4 @@ def FI2Pop(population,maxIter, nPop,mutationFactor):
 
         print(f"iter = {it} BestFitness = {feapop[0].fitness} N.solu = {feapop[0].nSol} N.Movi = {feapop[0].minMoves}")
     
-    return feapop[0].solution,feapop[0].fitness
+    return feapop[0].solution,feapop[0].fitness ,feapop[0].nSol, feapop[0].minMoves

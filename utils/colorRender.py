@@ -3,10 +3,12 @@ from openpyxl.styles import PatternFill
 from datetime import datetime
 import numpy as np
 import csv
+import os
+
 from modules import solver as S
 
 def csv_to_numpy_matrix(file):
-    with open(f'results/{file}.csv', 'r') as csvfile:
+    with open(f'{file}', 'r') as csvfile:
         reader = csv.reader(csvfile)
         data = list(reader)
     
@@ -22,8 +24,68 @@ def bestSolution(dungeon):
             if len(sol) < len(best):
                 best = sol
     return best
+# Función para crear una carpeta si no existe
+def crear_carpeta_si_no_existe(nombre_carpeta):
+    if not os.path.exists(nombre_carpeta):
+        os.makedirs(nombre_carpeta)
 
-def renderMatrix(map):
+# Función para obtener el número siguiente para el nombre del archivo
+def obtener_numero_siguiente_carpeta(nombre_carpeta):
+    if not os.path.exists(nombre_carpeta):
+        return 1
+    else:
+        return len(os.listdir(nombre_carpeta)) + 1
+
+def createFoldersCsv(map):
+    now = datetime.now()
+    formato_fecha = now.strftime("%d-%m")
+
+    ExperimentFolder = "Results/Experiment " + formato_fecha
+    solutionsFolder = os.path.join(ExperimentFolder,"SolutionsCsv")
+
+    crear_carpeta_si_no_existe(ExperimentFolder)
+    crear_carpeta_si_no_existe(solutionsFolder)
+
+    nFile = obtener_numero_siguiente_carpeta(solutionsFolder)
+    csvName = f"Solution_{nFile}.csv"
+    csvFileName = os.path.join(solutionsFolder, csvName)
+
+    np.savetxt(f'{csvFileName}', map, delimiter=',', fmt='%d')
+    return csvFileName
+
+def createFoldersExcel(wb):
+    now = datetime.now()
+    formato_fecha = now.strftime("%d-%m")
+
+    ExperimentFolder = "Results/Experiment " + formato_fecha
+    dungeonsFolder = os.path.join(ExperimentFolder, "Dungeons")
+
+    crear_carpeta_si_no_existe(ExperimentFolder)
+    crear_carpeta_si_no_existe(dungeonsFolder)
+
+    nFile= obtener_numero_siguiente_carpeta(dungeonsFolder)
+    dungeonName = f"Dungeon_{nFile}.xlsx"
+    excelFileName = os.path.join(dungeonsFolder,dungeonName)
+
+    wb.save(f"{excelFileName}")
+
+def ajustar_ancho_columnas(worksheet,middleColumn):
+    i=1
+    for column_cells in worksheet.columns:
+        max_length = 0
+        column = column_cells[0].column_letter  # Obtiene la letra de la columna
+        for cell in column_cells:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        if middleColumn <= i:
+            adjusted_width = (max_length + 2)
+            worksheet.column_dimensions[column].width = adjusted_width
+        i+=1
+ 
+def renderMatrix(map, fitness, nSol, minMoves):
     wb = Workbook()
     hoja = wb.active
     for fila_idx, fila in enumerate(map, start=1):
@@ -44,11 +106,25 @@ def renderMatrix(map):
             relleno = PatternFill(start_color=color, end_color=color, fill_type="solid")
             hoja.cell(row=fila_idx, column=celda_idx).fill = relleno
 
-    now = datetime.now()
-    formato_fecha = now.strftime("%d-%m_%H-%M-%S")
-    nArchivo = "Dungeon_" + formato_fecha
-    wb.save(f"results/{nArchivo}.xlsx")
-    np.savetxt(f'results/{nArchivo}.csv', map, delimiter=',', fmt='%d')
+
+   
+    lastRow = (map.shape[0] // 2) - 1
+    middleColumn = map.shape[1] + 2
+
+    hoja.cell(row=lastRow, column=middleColumn,value="Fitness")
+    hoja.cell(row=lastRow , column=middleColumn +1,value="Number of Solutions")
+    hoja.cell(row=lastRow , column=middleColumn +2,value="Minimum Moves")
+
+    lastRow += 1
+    hoja.cell(row=lastRow, column=middleColumn,value=fitness)
+    hoja.cell(row=lastRow , column=middleColumn +1,value=nSol)
+    hoja.cell(row=lastRow , column=middleColumn +2,value=minMoves)
+
+    ajustar_ancho_columnas(hoja,middleColumn)
+   
+
+    createFoldersExcel(wb)
+    nArchivo=createFoldersCsv(map)
     renderMatrixQueue(nArchivo)
 
 def renderMatrixQueue(file):
@@ -81,6 +157,14 @@ def renderMatrixQueue(file):
         columna_inicio += len(map[0]) + 1
 
     now = datetime.now()
-    formato_fecha = now.strftime("%d-%m_%H-%M-%S")
-    nArchivo = "Solution" + formato_fecha + ".xlsx"
-    wb.save(f"results/{nArchivo}")
+    formato_fecha = now.strftime("%d-%m")
+    ExperimentFolder = "Results/Experiment " + formato_fecha
+    solutionsFolder = os.path.join(ExperimentFolder,"Solutions")
+
+    crear_carpeta_si_no_existe(solutionsFolder)
+
+    nFile= obtener_numero_siguiente_carpeta(solutionsFolder)
+    dungeonName = f"Solution_{nFile}.xlsx"
+    excelFileName = os.path.join(solutionsFolder,dungeonName)
+
+    wb.save(f"{excelFileName}")

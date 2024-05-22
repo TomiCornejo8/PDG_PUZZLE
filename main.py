@@ -3,7 +3,7 @@ import numpy as np
 import time as T
 
 # Imports propios
-from modules import scenarioFiller as SF
+from modules import ScenarioFiller as SF
 from modules import Fi2Pop,ILS,ILS2F,Fi2Pop2F
 from modules import reverse as R
 from utils import colorRender as color
@@ -14,10 +14,10 @@ mWidth = 10
 expantionFactor = 0.1
 enemyFactor =  0.09
 blockFactor = 0.083
-maxIter = 10
+maxIter = 5
 nPop = 10
 mutationFactor = 0.5
-experiments = 5
+experiments = 1
 
 # MAIN
 inicio = T.time()
@@ -41,9 +41,9 @@ for i in range(1,experiments+1):
     population = []
     for _ in range(nPop*2):
         population.append(SF.getIntialSol(borderDungeon.copy(),enemyFactor,blockFactor))
-    dungeon, fitness = Fi2Pop2F.FI2Pop(population,maxIter,nPop,mutationFactor)
+    dungeon, fitness , nSol, minMoves = Fi2Pop2F.FI2Pop(population,maxIter,nPop,mutationFactor)
     
-    color.renderMatrix(dungeon)
+    color.renderMatrix(dungeon,fitness, nSol, minMoves)
 
 
 print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos")
