@@ -17,7 +17,7 @@ def getPlayer(dungeon):
     return np.where(dungeon == M.PLAYER)
 
 def inDoor(player,dungeon):
-    for move in M.moves:
+    for move in M.MOVES:
         tile = M.lookAhead(player,move)
         if dungeon[tile[0],tile[1]] == M.DOOR:
             return True

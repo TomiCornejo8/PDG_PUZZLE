@@ -4,8 +4,7 @@ import time as T
 
 # Imports propios
 from modules import ScenarioFiller as SF
-from modules import Fi2Pop,ILS,ILS2F,Fi2Pop2F
-from modules import reverse as R
+from modules import Fi2Pop
 from utils import colorRender as color
 
 # CONFIG
@@ -24,24 +23,13 @@ inicio = T.time()
 print(f"Se inicia la generación del mapa")
 
 borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
-# initialSolution = SF.getIntialSol(dungeon.copy(),enemyFactor,blockFactor)
-# dungeon,bestFitness = ILS2F.ils(initialSolution,maxIter)
-
-"""
-for i in range(1,experiments +1):
-    dungeon,bestFitness = ILS.ils(initialSolution,maxIter)
-    np.savetxt('results/result.csv', dungeon, delimiter=',', fmt='%d')
-    color.renderMatrix(dungeon)
-    print(f"Nuevo mapa {i}\n")
-
-"""
 
 for i in range(1,experiments+1):
     print(f"Experimento {i}")
     population = []
     for _ in range(nPop*2):
         population.append(SF.getIntialSol(borderDungeon.copy(),enemyFactor,blockFactor))
-    dungeon, fitness , nSol, minMoves = Fi2Pop2F.FI2Pop(population,maxIter,nPop,mutationFactor)
+    dungeon, fitness , nSol, minMoves = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor)
     
     color.renderMatrix(dungeon,fitness, nSol, minMoves)
 

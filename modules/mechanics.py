@@ -7,9 +7,7 @@ UP = (-1,0)
 DOWN = (1,0)
 STAY = (0,0)
 
-moves = [RIGHT,LEFT,UP,DOWN]
-X = [LEFT,RIGHT]
-Y = [UP,DOWN]
+MOVES = [RIGHT,LEFT,UP,DOWN]
 
 EMPTY = 0
 WALL = 1
@@ -17,8 +15,6 @@ ENEMY = 3
 BLOCK = 2
 DOOR = 4
 PLAYER = 5
-
-TRAIL = 6
 
 # Functions
 def lookAhead(player,move):
@@ -41,7 +37,7 @@ def killEnemy(dungeon,enemy):
 def getAllowMoves(dungeon,player):
     notAllow = [WALL,BLOCK,ENEMY,DOOR]
     newMoves = []
-    for move in moves:
+    for move in MOVES:
         tile = lookAhead(player,move)
         dungeonTile = dungeon[tile[0],tile[1]]
         if not dungeonTile in notAllow:
@@ -51,7 +47,7 @@ def getAllowMoves(dungeon,player):
 
 def getMeleeEnemys(dungeon,player):
     enemys = []
-    for move in moves:
+    for move in MOVES:
         tile = lookAhead(player,move)
         if dungeon[tile[0],tile[1]] == ENEMY:
             enemys.append(tile)
