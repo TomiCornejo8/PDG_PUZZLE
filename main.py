@@ -1,5 +1,6 @@
 # Imports externos
 import time as T
+import random
 
 # Imports propios
 from modules import ScenarioFiller as SF
@@ -10,17 +11,18 @@ from modules import solver as sol
 nHight = 10
 mWidth = 10
 
-expantionFactor = 0.1
-enemyFactor =  0.08
-blockFactor = 0.15
+expantionFactor = 0.13
+enemyFactor =  0.083
+blockFactor = 0.1
 
-nPop = 5
+nPop = 12
 mutationFactor = 0.5
 
-maxIter = 1
+maxIter = 10
 maxMoves = 25
-experiments = 1
+experiments = 100
 
+newMapShape = 10
 # MAIN
 inicio = T.time()
 print(f"Se inicia la generación del mapa")
@@ -28,6 +30,9 @@ print(f"Se inicia la generación del mapa")
 borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
 
 for i in range(1,experiments+1):
+    if i % newMapShape == 0:
+        borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
+    maxMoves = random.randint(20, 25)
     print(f"Experimento {i}")
     population = []
     for _ in range(nPop*2):

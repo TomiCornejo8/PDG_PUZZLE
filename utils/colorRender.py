@@ -31,11 +31,15 @@ def crear_carpeta_si_no_existe(nombre_carpeta):
         os.makedirs(nombre_carpeta)
 
 # Función para obtener el número siguiente para el nombre del archivo
-def obtener_numero_siguiente_carpeta(nombre_carpeta):
-    if not os.path.exists(nombre_carpeta):
+def obtener_numero_siguiente_carpeta():
+    now = datetime.now()
+    formato_fecha = now.strftime("%d-%m")
+    ExperimentFolder = "Results/Experiment " + formato_fecha
+    dungeonsFolder = os.path.join(ExperimentFolder, "Dungeons")
+    if not os.path.exists(dungeonsFolder):
         return 1
     else:
-        return len(os.listdir(nombre_carpeta)) + 1
+        return len(os.listdir(dungeonsFolder)) +1
 
 def createFoldersCsv(map):
     now = datetime.now()
@@ -47,7 +51,7 @@ def createFoldersCsv(map):
     crear_carpeta_si_no_existe(ExperimentFolder)
     crear_carpeta_si_no_existe(solutionsFolder)
 
-    nFile = obtener_numero_siguiente_carpeta(solutionsFolder)
+    nFile = obtener_numero_siguiente_carpeta() -1
     csvName = f"Solution_{nFile}.csv"
     csvFileName = os.path.join(solutionsFolder, csvName)
 
@@ -64,7 +68,7 @@ def createFoldersExcel(wb):
     crear_carpeta_si_no_existe(ExperimentFolder)
     crear_carpeta_si_no_existe(dungeonsFolder)
 
-    nFile= obtener_numero_siguiente_carpeta(dungeonsFolder)
+    nFile= obtener_numero_siguiente_carpeta()
     dungeonName = f"Dungeon_{nFile}.xlsx"
     excelFileName = os.path.join(dungeonsFolder,dungeonName)
 
@@ -169,7 +173,7 @@ def renderMatrixQueue(file):
 
     crear_carpeta_si_no_existe(solutionsFolder)
 
-    nFile= obtener_numero_siguiente_carpeta(solutionsFolder)
+    nFile= obtener_numero_siguiente_carpeta()
     dungeonName = f"Solution_{nFile}.xlsx"
     excelFileName = os.path.join(solutionsFolder,dungeonName)
 
@@ -270,7 +274,7 @@ def renderMatrixQueueWMoves(dungeon):
 
     crear_carpeta_si_no_existe(solutionsFolder)
 
-    nFile= obtener_numero_siguiente_carpeta(solutionsFolder)
+    nFile= obtener_numero_siguiente_carpeta() -1
     dungeonName = f"Solution_{nFile}.xlsx"
     excelFileName = os.path.join(solutionsFolder,dungeonName)
 

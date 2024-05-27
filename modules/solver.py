@@ -147,6 +147,7 @@ def setRoutesTreeWMoves(routes,memoryStates,newDungeon,currentNode):
         routes.append(Node(newDungeon,parent=currentNode))  
     return routes,memoryStates
 
+
 def getMove(move):
     if move == M.RIGHT: return "RIGHT"
     elif move == M.LEFT: return "LEFT"
