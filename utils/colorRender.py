@@ -41,7 +41,7 @@ def obtener_numero_siguiente_carpeta():
     else:
         return len(os.listdir(dungeonsFolder)) +1
 
-def createFoldersCsv(map):
+def createFoldersCsv(map,i):
     now = datetime.now()
     formato_fecha = now.strftime("%d-%m")
 
@@ -51,7 +51,7 @@ def createFoldersCsv(map):
     crear_carpeta_si_no_existe(ExperimentFolder)
     crear_carpeta_si_no_existe(solutionsFolder)
 
-    nFile = obtener_numero_siguiente_carpeta() -1
+    nFile = obtener_numero_siguiente_carpeta() +i
     csvName = f"Solution_{nFile}.csv"
     csvFileName = os.path.join(solutionsFolder, csvName)
 

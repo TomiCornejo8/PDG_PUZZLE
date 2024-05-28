@@ -20,7 +20,7 @@ mutationFactor = 0.5
 
 maxIter = 10
 maxMoves = 25
-experiments = 100
+experiments = 1000
 
 newMapShape = 10
 # MAIN
@@ -30,15 +30,17 @@ print(f"Se inicia la generación del mapa")
 borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
 
 for i in range(1,experiments+1):
-    if i % newMapShape == 0:
-        borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
+    #if i % newMapShape == 0:
+    borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
+    """ 
     maxMoves = random.randint(20, 25)
     print(f"Experimento {i}")
     population = []
     for _ in range(nPop*2):
         population.append(SF.getIntialSol(borderDungeon.copy(),enemyFactor,blockFactor))
-    dungeon, fitness , nSol, minMoves = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor,maxMoves)
-    color.renderMatrix(dungeon,fitness, nSol, minMoves)
+    dungeon, fitness , nSol, minMoves = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor,maxMoves) """
+    color.createFoldersCsv(borderDungeon,i)
+    #color.renderMatrix(dungeon,fitness, nSol, minMoves)
 
 
 print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos")

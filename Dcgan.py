@@ -1,7 +1,7 @@
 import numpy as np
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-from tensorflow import keras 
+from tensorflow import keras
 from keras import layers
 import tensorflow as tf
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
@@ -36,24 +36,24 @@ def attention_block(x, filters):
 
 def build_generator(latent_dim, channels):
     generator_input = keras.Input(shape=(latent_dim,))
-    
-    x = layers.Dense(72 * 5 * 5)(generator_input)
+    matrixDim = 7
+    x = layers.Dense(144 * matrixDim * matrixDim)(generator_input)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU()(x)
-    x = layers.Reshape((5, 5, 72))(x)
+    x = layers.Reshape((matrixDim, matrixDim, 144))(x)
+    
+    x = layers.Conv2DTranspose(144, kernel_size=4, strides=1, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.LeakyReLU()(x)
+    
+    x = residual_block(x, 144)
+    x = attention_block(x, 144)
     
     x = layers.Conv2DTranspose(72, kernel_size=4, strides=1, padding="same")(x)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU()(x)
     
     x = residual_block(x, 72)
-    x = attention_block(x, 72)
-    
-    x = layers.Conv2DTranspose(36, kernel_size=4, strides=1, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU()(x)
-    
-    x = residual_block(x, 36)
     
     x = layers.Conv2DTranspose(channels, kernel_size=4, strides=2, padding="same", activation="tanh")(x)
 
@@ -71,86 +71,105 @@ def gradient_penalty(discriminator, real_samples, fake_samples):
         validity_interpolated = discriminator(interpolated, training=True)
     gradients = tape.gradient(validity_interpolated, [interpolated])[0]
     gradients_sqr = tf.square(gradients)
-    gradient_penalty = tf.reduce_mean(gradients_sqr)
+    gradients_sqr_sum = tf.reduce_sum(gradients_sqr, axis=np.arange(1, len(gradients_sqr.shape)))
+    gradient_penalty = tf.reduce_mean((gradients_sqr_sum - 1.0) ** 2)
     return gradient_penalty
 
 # Define el discriminador
 def build_discriminator(img_shape):
     discriminator_input = keras.Input(shape=img_shape)
     
-    x = layers.Conv2D(36, kernel_size=4, strides=2, padding="same")(discriminator_input)
+    x = layers.Conv2D(72, kernel_size=4, strides=2, padding="same")(discriminator_input)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU()(x)
+    x = layers.Dropout(0.3)(x)
     
-    x = layers.Conv2D(72, kernel_size=4, strides=2, padding="same")(x)
+    x = layers.Conv2D(144, kernel_size=4, strides=2, padding="same")(x)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU()(x)
+    x = layers.Dropout(0.3)(x)
+    
+    x = layers.Conv2D(288, kernel_size=4, strides=2, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.LeakyReLU()(x)
+    x = layers.Dropout(0.3)(x)
+    
     x = layers.Flatten()(x)
-    
-    x = layers.Dense(1, activation="sigmoid")(x)
+    x = layers.Dense(1)(x)
     
     discriminator = keras.models.Model(discriminator_input, x)
     return discriminator
 
 # Define la DCGAN
-def build_dcgan(generator, discriminator,latent_dim):
+def build_dcgan(generator, discriminator, latent_dim):
     discriminator.trainable = False
     gan_input = keras.Input(shape=(latent_dim,))
     gan_output = discriminator(generator(gan_input))
     gan = keras.models.Model(gan_input, gan_output)
     return gan
 
-def getGan(latent_dim):
+def get_gan(latent_dim,matrixDim):
     # Parámetros
-    latent_dim = latent_dim
-    img_shape = (10, 10,6)  # Tamaño de la imagen generada (10x10 píxeles, 6 canales)
+    img_shape = matrixDim # Tamaño de la imagen generada (14x14 píxeles, 2 canales)
     channels = img_shape[-1]
+    
     # Construye y compila el generador y el discriminador
     generator = build_generator(latent_dim, channels)
     discriminator = build_discriminator(img_shape)
-    gan = build_dcgan(generator, discriminator,latent_dim)
+    gan = build_dcgan(generator, discriminator, latent_dim)
 
-    lr_schedule = ExponentialDecay(initial_learning_rate=0.000005, decay_steps=100000, decay_rate=0.96, staircase=True)
-    optimizer = Adam(learning_rate=lr_schedule, beta_1=0.5)
+    lr_schedule_d = ExponentialDecay(initial_learning_rate=0.0002, decay_steps=10000, decay_rate=0.96, staircase=True)
+    lr_schedule_g = ExponentialDecay(initial_learning_rate=0.0001, decay_steps=10000, decay_rate=0.96, staircase=True)
+    optimizer_d = Adam(learning_rate=lr_schedule_d, beta_1=0.5, beta_2=0.9)
+    optimizer_g = Adam(learning_rate=lr_schedule_g, beta_1=0.5, beta_2=0.9)
 
-    discriminator.compile( loss=wasserstein_loss, optimizer=optimizer)
-    gan.compile(optimizer=keras.optimizers.Adam(learning_rate=0.00001, beta_1=0.5), loss="binary_crossentropy")
-    return gan,generator,discriminator
+    discriminator.compile(loss=wasserstein_loss, optimizer=optimizer_d)
+    gan.compile(optimizer=optimizer_g, loss=wasserstein_loss)
+    return gan, generator, discriminator, optimizer_d, optimizer_g
 
 
-
-def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim):
-    valid = np.ones((batch_size, 1)) * 0.9  # Suavizado de etiquetas para datos reales
-    fake = np.zeros((batch_size, 1)) + 0.1  # Suavizado de etiquetas para datos falsos
-    d_loss = 0
-    print("Training DCGAN...",valid)
+def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim, optimizer_d, optimizer_g, n_critic=10):
+    valid = -tf.ones((batch_size, 1))
+    fake = tf.ones((batch_size, 1))
+    
     for epoch in range(epochs):
-        # Entrena el discriminador con imágenes reales
-        idx = np.random.randint(0, len(data), batch_size)
-        real_imgs = np.array([data[i] for i in idx])
-        
-        # Genera un lote de imágenes falsas
-        noise = np.random.normal(0, 1, (batch_size, latent_dim))
-        gen_imgs = generator.predict(noise)
-        # Mueve los ejes para que las dimensiones coincidan con lo esperado por el discriminador
-        real_imgs = np.moveaxis(real_imgs,[0, 1, 2, 3], [0,3, 2, 1])
-        #gen_imgs = np.moveaxis(gen_imgs,[0, 1, 2, 3], [0,3, 2, 1])
-        gp = gradient_penalty(discriminator, real_imgs, gen_imgs)
-        #d_loss += 10 * gp  # 10 is the lambda parameter for gradient penalty
-        # Entrena el discriminador
-        if epoch % 5 == 0:
-            d_loss_real = discriminator.train_on_batch(real_imgs, valid)
-            d_loss_fake = discriminator.train_on_batch(gen_imgs, fake)
-            d_loss = 0.5 * (d_loss_real + d_loss_fake) + 10 * gp 
-        
-        
+        for _ in range(n_critic):
+            # Entrena el discriminador con imágenes reales
+            idx = np.random.randint(0, data.shape[0], batch_size)
+            real_imgs=data[idx]
+            real_imgs = np.moveaxis(real_imgs,[0, 1, 2, 3], [0,3, 2, 1])
+            real_imgs = tf.convert_to_tensor(real_imgs, dtype=tf.float32)
+            # Genera un lote de imágenes falsas
+            noise = tf.random.normal((batch_size, latent_dim))
+            gen_imgs = generator(noise, training=False)
+            
+            # Calcula la penalización del gradiente
+            gp = gradient_penalty(discriminator, real_imgs, gen_imgs)
+            
+            with tf.GradientTape() as tape:
+                d_loss_real = discriminator(real_imgs, training=True)
+                d_loss_fake = discriminator(gen_imgs, training=True)
+                d_loss = 0.5 * (tf.reduce_mean(d_loss_real) + tf.reduce_mean(d_loss_fake)) + 10 * gp
+            
+            grads = tape.gradient(d_loss, discriminator.trainable_variables)
+            
+            if None not in grads and grads:
+                optimizer_d.apply_gradients(zip(grads, discriminator.trainable_variables))
+
         # Entrena el generador
-        noise = np.random.normal(0, 1, (batch_size, latent_dim))
-        g_loss = gan.train_on_batch(noise, valid)
+        noise = tf.random.normal((batch_size, latent_dim))
+        with tf.GradientTape() as tape:
+            g_loss = gan(noise, training=True)
+        
+        grads = tape.gradient(g_loss, gan.trainable_variables)
+        optimizer_g.apply_gradients(zip(grads, gan.trainable_variables))
         
         # Imprime el progreso
         print(f"{epoch} [D loss: {d_loss}] [G loss: {g_loss[0]}]")
         
         # Guarda las imágenes generadas a intervalos regulares
-        if epoch % 50 == 0:
+        if epoch % 15 == 0:
             color.save_images(epoch, generator, latent_dim)
+
+
+            # real_imgs = np.moveaxis(real_imgs,[0, 1, 2, 3], [0,3, 2, 1])
