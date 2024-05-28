@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 def load_data_from_folders():
     resultPath= 'Results'
@@ -27,7 +26,7 @@ def load_data_from_folders():
 
 
 
-def load_data_from_folder(channels):
+def load_data_from_folder(channels,height,width):
     resultPath = 'Results'
     resultsFolders = os.listdir(resultPath)
     data_list = []
@@ -41,7 +40,7 @@ def load_data_from_folder(channels):
                 df = pd.read_csv(file_path, header=None)
                 
                 # Redimensionar la matriz a 14x14
-                data_14x14 = np.zeros((14, 14))
+                data_14x14 = np.ones((width, height))
                 data_14x14[2:12, 2:12] = df.values  # Colocar los valores del CSV en el centro de la matriz 14x14
             
 
