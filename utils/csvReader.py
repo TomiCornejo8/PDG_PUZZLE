@@ -39,14 +39,10 @@ def load_data_from_folder(channels,height,width):
                 file_path = os.path.join(folder_path, filename)
                 df = pd.read_csv(file_path, header=None)
                 
-                # Redimensionar la matriz a 14x14
-                data_14x14 = np.ones((width, height))
-                data_14x14[2:12, 2:12] = df.values  # Colocar los valores del CSV en el centro de la matriz 14x14
-            
 
                 data_channels = []
                 for i in range(channels):
-                    channel = np.where(data_14x14 == i, 1, 0)
+                    channel = np.where(df.values == i, 1, 0)
                     data_channels.append(channel)
                 
                 data_list.append(np.array(data_channels))

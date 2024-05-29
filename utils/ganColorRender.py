@@ -25,11 +25,10 @@ def matrix_to_color_image(matrix):
             color_image[i, j] = value_to_color(matrix[:, i, j].argmax())
     return color_image
 
-def save_images(epoch, generator, latent_dim, examples=6, dim=(1, 6), figsize=(6, 1)):
-    noise = np.random.normal(0, 1, (examples, latent_dim))
+def save_images(epoch, generator, latent_dim, examples=3, dim=(1, 3), figsize=(3, 1)):
+    noise = np.random.normal(-1, 1, (examples, latent_dim))
     gen_imgs = generator.predict(noise)
     gen_imgs = 0.5 * gen_imgs + 0.5  # Rescale [-1, 1] to [0, 1]
-    
     plt.figure(figsize=figsize)
     for i in range(examples):
         img = gen_imgs[i]
