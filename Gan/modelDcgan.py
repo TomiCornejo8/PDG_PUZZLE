@@ -37,7 +37,6 @@ def buildGenerator(layer=2,layerResidual = 2,layerAttention = 2,neurons=100,late
     x = layers.Reshape((width, height, neurons))(x)
 
     for _ in range(layer):
-        print(neurons)
         x = layers.Conv2DTranspose(neurons , kernel_size=4, strides=1, padding="same")(x)
         x = layers.BatchNormalization()(x)
         x = layers.LeakyReLU()(x)

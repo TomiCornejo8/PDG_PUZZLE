@@ -2,7 +2,6 @@ import numpy as np
 from tensorflow import keras
 from keras import layers
 import tensorflow as tf
-from tensorflow.keras.losses import MeanAbsoluteError
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 from tensorflow.keras.optimizers import Adam,RMSprop
 
@@ -35,7 +34,7 @@ def build_dcgan(generator, discriminator, latent_dim):
     gan = keras.models.Model(gan_input, gan_output)
     return gan
 
-def get_gan(layerG,layerResidual,layerAttention,neuronsG,layerD,neuronsD,latent_dim,matrixDim,width,height):
+def get_gan(layerG,layerResidual,layerAttention,neuronsG,optimizer_g,layerD,neuronsD,optimizer_d,latent_dim,matrixDim,width,height):
     # Parámetros
     img_shape = matrixDim 
     channels = img_shape[-1]
@@ -48,8 +47,8 @@ def get_gan(layerG,layerResidual,layerAttention,neuronsG,layerD,neuronsD,latent_
 
     gan = build_dcgan(generator, discriminator, latent_dim)
 
-    optimizer_d = Adam(learning_rate=0.000002, beta_1=0.9, beta_2=0.99999)
-    optimizer_g = Adam(learning_rate=0.000002, beta_1=0.9, beta_2=0.99999)
+    optimizer_d = Adam(learning_rate=0.000001, beta_1=0.9, beta_2=0.99999)
+    optimizer_g = Adam(learning_rate=0.000001, beta_1=0.9, beta_2=0.99999)
 
     """optimizer_d = RMSprop(learning_rate=lr_schedule_d)
     optimizer_g = RMSprop(learning_rate=lr_schedule_g) """
@@ -58,9 +57,9 @@ def get_gan(layerG,layerResidual,layerAttention,neuronsG,layerD,neuronsD,latent_
     gan.compile(optimizer=optimizer_g, loss=wasserstein_loss)
     return gan, generator, discriminator, optimizer_d, optimizer_g
 
-def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim, optimizer_d, optimizer_g, n_critic=5):
+def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim, optimizer_d, optimizer_g, n_critic=5,optim=''):
     data = 2 * data - 1
-    for epoch in range(epochs):
+    for epoch in range(epochs + 1):
         for _ in range(n_critic):
             idx = np.random.randint(0, data.shape[0], batch_size)
             real_imgs = data[idx]
@@ -91,4 +90,4 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
         print(f"{epoch} [D loss: {d_loss.numpy()}] [G loss: {g_loss.numpy()}]")
         
         if epoch % 100 == 0:
-            color.save_images(epoch, generator, latent_dim)
+            color.save_images(epoch=epoch, generator=generator,discriminator=discriminator, latent_dim=latent_dim,optim=optim)
