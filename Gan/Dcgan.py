@@ -3,7 +3,7 @@ from tensorflow import keras
 from keras import layers
 import tensorflow as tf
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
-from tensorflow.keras.optimizers import Adam,RMSprop
+
 
 #Internal 
 from utils import ganColorRender as color
@@ -38,27 +38,19 @@ def get_gan(layerG,layerResidual,layerAttention,neuronsG,optimizer_g,layerD,neur
     # Parámetros
     img_shape = matrixDim 
     channels = img_shape[-1]
-    
-    # Construye y compila el generador y el discriminador
-    #generator = build_generator(latent_dim, channels,width,height)
-    #discriminator = build_discriminator(img_shape)
+
     generator = modelDc.buildGenerator(layerG,layerResidual,layerAttention,neuronsG,latent_dim, channels,width,height)
     discriminator=modelDc.buildDiscriminator(layerD,neuronsD,img_shape)
 
     gan = build_dcgan(generator, discriminator, latent_dim)
 
-    optimizer_d = Adam(learning_rate=0.000001, beta_1=0.9, beta_2=0.99999)
-    optimizer_g = Adam(learning_rate=0.000001, beta_1=0.9, beta_2=0.99999)
-
-    """optimizer_d = RMSprop(learning_rate=lr_schedule_d)
-    optimizer_g = RMSprop(learning_rate=lr_schedule_g) """
-
     discriminator.compile(loss= wasserstein_loss, optimizer=optimizer_d)
     gan.compile(optimizer=optimizer_g, loss=wasserstein_loss)
     return gan, generator, discriminator, optimizer_d, optimizer_g
 
-def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim, optimizer_d, optimizer_g, n_critic=5,optim=''):
-    data = 2 * data - 1
+def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim, optimizer_d, 
+                optimizer_g, n_critic=5,optim=''):
+
     for epoch in range(epochs + 1):
         for _ in range(n_critic):
             idx = np.random.randint(0, data.shape[0], batch_size)
@@ -66,7 +58,7 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
             real_imgs = np.moveaxis(real_imgs, [0, 1, 2, 3], [0, 3, 2, 1])
             real_imgs = tf.convert_to_tensor(real_imgs, dtype=tf.float32)
             
-            noise = tf.random.normal((batch_size, latent_dim), -1, 1)
+            noise = tf.random.normal((batch_size, latent_dim))
             gen_imgs = generator(noise, training=False)
             gp = gradient_penalty(discriminator, real_imgs, gen_imgs)
             
@@ -80,7 +72,7 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
             if None not in grads and grads:
                 optimizer_d.apply_gradients(zip(grads, discriminator.trainable_variables))
 
-        noise = tf.random.normal((batch_size , latent_dim), -1, 1)
+        noise = tf.random.normal((batch_size , latent_dim))
         with tf.GradientTape() as tape:
             g_loss = -tf.reduce_mean(discriminator(generator(noise, training=True)))
         
@@ -90,4 +82,4 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
         print(f"{epoch} [D loss: {d_loss.numpy()}] [G loss: {g_loss.numpy()}]")
         
         if epoch % 100 == 0:
-            color.save_images(epoch=epoch, generator=generator,discriminator=discriminator, latent_dim=latent_dim,optim=optim)
+            color.save_imagess(epoch=epoch, generator=generator,discriminator=discriminator, latent_dim=latent_dim,optim=optim)

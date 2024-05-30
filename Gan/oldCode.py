@@ -48,3 +48,11 @@ def build_generator(latent_dim, channels,width,height):
 
     generator = keras.models.Model(generator_input, x)
     return generator
+
+
+
+
+
+
+
+

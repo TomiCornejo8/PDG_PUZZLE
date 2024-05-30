@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 
 def value_to_color(value):
     if value == 0:
@@ -25,8 +26,8 @@ def matrix_to_color_image(matrix):
             color_image[i, j] = value_to_color(matrix[:, i, j].argmax())
     return color_image
 
-def save_images(epoch, generator,discriminator, latent_dim, examples=10, dim=(2, 5), figsize=(18, 6),optim=''):
-    noise = np.random.normal(-1, 1, (examples, latent_dim))
+def save_imagess(epoch, generator,discriminator, latent_dim, examples=10, dim=(2, 5), figsize=(18, 6),optim=''):
+    noise = np.random.normal(size=(examples, latent_dim))
     gen_imgs = generator.predict(noise)
     discriminate=discriminator(gen_imgs)
     gen_imgs = 0.5 * gen_imgs + 0.5  # Rescale [-1, 1] to [0, 1]
@@ -39,14 +40,37 @@ def save_images(epoch, generator,discriminator, latent_dim, examples=10, dim=(2,
         plt.imshow(color_img)
         plt.axis('off')
         if discriminate[i] < 0:
-            plt.text(0.5, -0.1, f"Prediction: Falso", transform=axes.transAxes,
+            plt.text(0.5, -0.1, f"Prediction: False", transform=axes.transAxes,
             ha="center", fontsize=14)
         else:
-            plt.text(0.5, -0.1, f"Prediction: Verdadero", transform=axes.transAxes,
+            plt.text(0.5, -0.1, f"Prediction: True", transform=axes.transAxes,
             ha="center", fontsize=14)
             trueLabel+=1
             
     
+    plt.tight_layout()
+    plt.savefig(f"{optim}/gen_img_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
+    plt.close()
+
+def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2, 5), figsize=(18, 6), optim=''):
+    noise = torch.randn((examples, latent_dim))
+    gen_imgs = generator(noise).detach().cpu().numpy()
+    discriminate = discriminator(torch.tensor(gen_imgs, dtype=torch.float32))
+    gen_imgs = 0.5 * gen_imgs + 0.5  # Rescale [-1, 1] to [0, 1]
+    plt.figure(figsize=figsize)
+    trueLabel = 0
+    for i in range(examples):
+        img = gen_imgs[i]
+        color_img = matrix_to_color_image(np.moveaxis(img, -1, 0))
+        axes = plt.subplot(dim[0], dim[1], i + 1)
+        plt.imshow(color_img)
+        plt.axis('off')
+        if discriminate[i] < 0:
+            plt.text(0.5, -0.1, "Prediction: False", transform=axes.transAxes, ha="center", fontsize=14)
+        else:
+            plt.text(0.5, -0.1, "Prediction: True", transform=axes.transAxes, ha="center", fontsize=14)
+            trueLabel += 1
+
     plt.tight_layout()
     plt.savefig(f"{optim}/gen_img_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
     plt.close()
