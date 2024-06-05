@@ -29,8 +29,8 @@ def matrix_to_color_image(matrix):
 def save_imagess(epoch, generator,discriminator, latent_dim, examples=10, dim=(2, 5), figsize=(18, 6),optim=''):
     noise = np.random.normal(size=(examples, latent_dim))
     gen_imgs = generator.predict(noise)
-    discriminate=discriminator(gen_imgs)
     gen_imgs = 0.5 * gen_imgs + 0.5  # Rescale [-1, 1] to [0, 1]
+    discriminate=discriminator(gen_imgs)
     plt.figure(figsize=figsize)
     trueLabel=0
     for i in range(examples):
