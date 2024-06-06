@@ -26,7 +26,6 @@ def load_data_from_folders():
     return np.array(data_list)
 
 
-
 def load_data_from_folder(channels):
     resultPath = 'Results'
     resultsFolders = os.listdir(resultPath)

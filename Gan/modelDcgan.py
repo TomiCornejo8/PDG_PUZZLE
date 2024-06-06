@@ -44,12 +44,13 @@ class Generator(nn.Module):
         self.dense = nn.Linear(latent_dim, neurons * self.width * self.height)
         self.bn = nn.BatchNorm1d(neurons * self.width * self.height)
         self.layers = nn.ModuleList()
-        for _ in range(layer):
+        for i in range(layer):
             self.layers.append(nn.ConvTranspose2d(neurons, neurons, kernel_size=4, stride=1, padding=1))
             self.layers.append(nn.BatchNorm2d(neurons))
             self.layers.append(ResidualBlock(neurons) if layerResidual > 0 else nn.Identity())
             self.layers.append(AttentionBlock(neurons) if layerAttention > 0 else nn.Identity())
-            neurons //= 2
+            if i // 2 != 1:
+                neurons = neurons // 2
         self.conv_final = nn.ConvTranspose2d(neurons * 2, channels, kernel_size=4, stride=2, padding=1)
 
     def forward(self, x):
@@ -66,11 +67,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.layers = nn.ModuleList()
         self.layers.append(nn.Conv2d(channels, neurons, kernel_size=4, stride=2, padding=1))
-        for _ in range(layer):
+        for i in range(layer):
             self.layers.append(nn.Conv2d(neurons, neurons, kernel_size=4, stride=2, padding=1))
             self.layers.append(nn.LeakyReLU(0.2))
             self.layers.append(nn.Dropout(0.3))
-            neurons //= 2
+            if i // 2 != 1:
+                neurons = neurons // 2
         self.fc = nn.Linear(neurons * 4 * 4, 1)  # Ajusta esto según la forma final
 
     def forward(self, x):
@@ -84,7 +86,6 @@ class Discriminator(nn.Module):
 from tensorflow import keras
 from keras import layers
 
-
 def residual_block(x, filters, kernel_size=3, strides=1):
     shortcut = x
     x = layers.Conv2D(filters, kernel_size, strides=strides, padding="same")(x)
@@ -97,8 +98,8 @@ def residual_block(x, filters, kernel_size=3, strides=1):
     return x
 
 def attention_block(x, filters):
-    f = layers.Conv2D(filters // 8, 1, padding='same')(x)
-    g = layers.Conv2D(filters // 8, 1, padding='same')(x)
+    f = layers.Conv2D(filters // 4, 1, padding='same')(x)
+    g = layers.Conv2D(filters // 4, 1, padding='same')(x)
     h = layers.Conv2D(filters, 1, padding='same')(x)
     
     s = layers.add([f, g])
@@ -119,7 +120,7 @@ def buildGenerator(layer=2,layerResidual = 2,layerAttention = 2,neurons=100,late
     x = layers.LeakyReLU()(x)
     x = layers.Reshape((width, height, neurons))(x)
 
-    for _ in range(layer):
+    for i in range(layer):
         x = layers.Conv2DTranspose(neurons , kernel_size=4, strides=1, padding="same")(x)
         x = layers.BatchNormalization()(x)
         x = layers.LeakyReLU()(x)
@@ -129,10 +130,11 @@ def buildGenerator(layer=2,layerResidual = 2,layerAttention = 2,neurons=100,late
         if layerAttention > 0:
                 x = attention_block(x, neurons )
                 layerAttention -= 1
-        neurons = neurons // 2
+        if i // 2 != 1:
+            neurons = neurons // 2
 
-    x = layers.Conv2DTranspose(channels, kernel_size=4, strides=2, padding="same", activation="tanh")(x)
-
+    #x = layers.Conv2DTranspose(channels, kernel_size=4, strides=2, padding="same", activation="tanh")(x)
+    x = layers.Conv2DTranspose(channels, kernel_size=4, strides=2, padding="same", activation="sigmoid")(x)
     generator = keras.models.Model(input, x)
     generator.summary()
     return generator
@@ -143,11 +145,12 @@ def buildDiscriminator(layer=2,neurons=100,img_shape=6):
     x = layers.Conv2D(neurons, kernel_size=4, strides=2, padding="same")(input)
     x = layers.LeakyReLU()(x)
     x = layers.Dropout(0.3)(x)
-    for _ in range(layer):
+    for i in range(layer):
         x = layers.Conv2D(neurons, kernel_size=4, strides=2, padding="same")(x)
         x = layers.LeakyReLU()(x)
         x = layers.Dropout(0.3)(x)
-        neurons = neurons // 2
+        if i // 2 == 0:
+            neurons = neurons * 2
 
 
     x = layers.Flatten()(x)
@@ -156,3 +159,5 @@ def buildDiscriminator(layer=2,neurons=100,img_shape=6):
     discriminator = keras.models.Model(input, x)
     discriminator.summary()
     return discriminator
+
+

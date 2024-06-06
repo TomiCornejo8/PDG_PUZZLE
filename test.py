@@ -13,23 +13,22 @@ channels = 6
 width = 10
 height = 10
 
-layerG = 3
-layerResidual = 3
-layerAttention = 3
-neuronsG = 256
+layerG = 2
+layerResidual = 2
+layerAttention = 2
+neuronsG = 372
 
-layerD=  9
-neuronsD = 256
+layerD = 4
+neuronsD = 128
 
 dataSet = csvReader.load_data_from_folder(channels)
-epochs =1200
-batch_size = 128
-latent_dim =  256
-n_critic=2
+epochs = 1200
+batch_size = 256
+latent_dim =  100
+n_critic = 5
 matrixDim= (width,height,channels)
-
 optimizerAdam_g = Adam(
-    learning_rate=0.0001,  # Común entre 0.001 y 0.0001
+    learning_rate=0.00005,  # Común entre 0.001 y 0.0001
     beta_1=0.9,           # Típicamente 0.9
     beta_2=0.999,         # Típicamente 0.999
     epsilon=1e-7,         # Pequeño número para evitar divisiones por cero           # Generalmente 0.0, pero ajustable
@@ -37,18 +36,18 @@ optimizerAdam_g = Adam(
 )
 
 optimizerRmsProp_d =  RMSprop(
-    learning_rate=0.000333,   # Usualmente entre 0.001 y 0.0001
+    learning_rate=0.0001,   # Usualmente entre 0.001 y 0.0001
     rho=0.9,               # Comúnmente 0.9
     momentum=0.0,          # Generalmente 0.0, pero puede ajustarse
     epsilon=1e-7,          # Pequeño número para evitar divisiones por cero
     centered=False         # Puede ser True para normalizar gradientes
 )
 
-""" gan, generator, discriminator, optimizer_d, optimizer_g = dc.get_gan(layerG,layerResidual,layerAttention,
+gan, generator, discriminator, optimizer_d, optimizer_g = dc.get_gan(layerG,layerResidual,layerAttention,
                                                                      neuronsG,optimizerAdam_g,layerD,neuronsD,
                                                                      optimizerRmsProp_d,latent_dim,matrixDim,width,height)
 dc.train_dcgan(generator, discriminator, gan, dataSet, epochs, batch_size, latent_dim, optimizer_d,
-                optimizer_g, n_critic,"adam")  """
+                optimizer_g, n_critic,"adam")  
 
 
 """ gan, generator, discriminator, optimizer_d, optimizer_g = dc.get_gan(layerG,layerResidual,layerAttention,neuronsG,optimizerRmsProp_g,layerD,neuronsD,optimizerRmsProp_d,latent_dim,matrixDim,width,height)

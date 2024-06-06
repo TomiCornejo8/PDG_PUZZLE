@@ -3,11 +3,25 @@ from tensorflow import keras
 from keras import layers
 import tensorflow as tf
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
-
-
+from tensorflow.keras.callbacks import ModelCheckpoint
+import os
 #Internal 
 from utils import ganColorRender as color
 from Gan import modelDcgan as modelDc
+
+def ModelCheckpoint(
+    filepath='ruta_a_guardar_checkpoints/checkpoint-{epoch:02d}.weights.h5',
+    save_weights_only=True,
+    save_freq='epoch',  # O 'batch' para guardar después de cada lote
+    verbose=1
+):
+    return keras.callbacks.ModelCheckpoint(
+        filepath=filepath,
+        save_weights_only=save_weights_only,
+        save_freq=save_freq,
+        verbose=verbose
+    )
+
 
 def wasserstein_loss(y_true, y_pred):
     return tf.reduce_mean(y_true * y_pred)
@@ -58,7 +72,7 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
             real_imgs = np.moveaxis(real_imgs, [0, 1, 2, 3], [0, 3, 2, 1])
             real_imgs = tf.convert_to_tensor(real_imgs, dtype=tf.float32)
             
-            noise = tf.random.normal((batch_size, latent_dim))
+            noise = tf.random.normal((batch_size, latent_dim), 0, 1, tf.float32)
             gen_imgs = generator(noise, training=False)
             gp = gradient_penalty(discriminator, real_imgs, gen_imgs)
             
@@ -72,14 +86,19 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
             if None not in grads and grads:
                 optimizer_d.apply_gradients(zip(grads, discriminator.trainable_variables))
 
-        noise = tf.random.normal((batch_size , latent_dim))
+        noise = tf.random.normal((batch_size , latent_dim), 0, 1, tf.float32)
         with tf.GradientTape() as tape:
             g_loss = -tf.reduce_mean(discriminator(generator(noise, training=True)))
         
         grads = tape.gradient(g_loss, generator.trainable_variables)
         optimizer_g.apply_gradients(zip(grads, generator.trainable_variables))
-        
+
         print(f"{epoch} [D loss: {d_loss.numpy()}] [G loss: {g_loss.numpy()}]")
         
-        if epoch % 100 == 0:
+        if epoch % 50 == 0:
+            checkpoint_dir = './training_checkpoints'
+            if not os.path.exists(checkpoint_dir):
+                os.makedirs(checkpoint_dir)
             color.save_imagess(epoch=epoch, generator=generator,discriminator=discriminator, latent_dim=latent_dim,optim=optim)
+            generator.save_weights(os.path.join(checkpoint_dir, f'generator_epoch_{epoch+1}.weights.h5'))
+            discriminator.save_weights(os.path.join(checkpoint_dir, f'discriminator_epoch_{epoch+1}.weights.h5'))
