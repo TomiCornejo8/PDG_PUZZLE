@@ -16,16 +16,16 @@ height = 10
 layerG = 2
 layerResidual = 2
 layerAttention = 2
-neuronsG = 372
+neuronsG = 128
 
-layerD = 4
-neuronsD = 128
+layerD = 7
+neuronsD = 32
 
 dataSet = csvReader.load_data_from_folder(channels)
 epochs = 1200
 batch_size = 256
-latent_dim =  100
-n_critic = 5
+latent_dim =  128
+n_critic = 10
 matrixDim= (width,height,channels)
 optimizerAdam_g = Adam(
     learning_rate=0.00005,  # Común entre 0.001 y 0.0001
