@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow as tf
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+import torch
 
 def value_to_color(value):
     if value == 0:
@@ -28,28 +26,25 @@ def matrix_to_color_image(matrix):
             color_image[i, j] = value_to_color(matrix[:, i, j].argmax())
     return color_image
 
-def save_imagess(epoch, generator,discriminator, latent_dim, examples=10, dim=(2, 5), figsize=(18, 6),optim='adam'):
-    noise = tf.random.normal((examples , latent_dim), 0, 1, tf.float32)
-    gen_imgs = generator.predict(noise)
-    #gen_imgs = 0.5 * gen_imgs + 0.5  # Rescale [-1, 1] to [0, 1]
-    discriminate=discriminator(gen_imgs)
+def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2, 5), figsize=(18, 6), optim='adam'):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    noise = torch.randn((examples, latent_dim)).to(device)
+    gen_imgs = generator(noise)
+    discriminate = discriminator(torch.tensor(gen_imgs, dtype=torch.float32).to(device))
     plt.figure(figsize=figsize)
-    trueLabel=0
+    trueLabel = 0
     for i in range(examples):
-        img = gen_imgs[i]
-        color_img = matrix_to_color_image(np.moveaxis(img, -1, 0))  # Convierte la matriz a una imagen en color
-        axes=plt.subplot(dim[0], dim[1], i+1)
+        img = gen_imgs[i].cpu().detach().numpy()
+        color_img = matrix_to_color_image(img)
+        axes = plt.subplot(dim[0], dim[1], i + 1)
         plt.imshow(color_img)
         plt.axis('off')
         if discriminate[i] < 0:
-            plt.text(0.5, -0.1, f"Prediction: False", transform=axes.transAxes,
-            ha="center", fontsize=14)
+            plt.text(0.5, -0.1, "Prediction: False", transform=axes.transAxes, ha="center", fontsize=14)
         else:
-            plt.text(0.5, -0.1, f"Prediction: True", transform=axes.transAxes,
-            ha="center", fontsize=14)
-            trueLabel+=1
-            
-    
+            plt.text(0.5, -0.1, "Prediction: True", transform=axes.transAxes, ha="center", fontsize=14)
+            trueLabel += 1
+
     plt.tight_layout()
     plt.savefig(f"{optim}/gen_img_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
     plt.close()

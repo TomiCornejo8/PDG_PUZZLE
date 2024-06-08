@@ -1,11 +1,18 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.autograd import Variable
 import numpy as np
-from utils import ganColorRender as color
-from Gan import modelDcgan as modelDc
+from utils import ganColorRenderTor as color
+from Gan import ModelTor as modelDc
+import os
+import torch
+import numpy as np
+
+# Limitar el uso de la GPU al 50%
+gpu_memory_fraction = 0.8
+# Obtén el ID de la GPU (0 si solo tienes una GPU)
+gpu_id = 0
+# Configura la GPU para utilizar solo un porcentaje específico de su memoria
+os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+torch.cuda.set_per_process_memory_fraction(gpu_memory_fraction, device=gpu_id)
 
 def wasserstein_loss(y_true, y_pred):
     return torch.mean(y_true * y_pred)
@@ -22,29 +29,28 @@ def gradient_penalty(discriminator, real_samples, fake_samples):
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
     return gradient_penalty
 
-def build_dcgan(generator, discriminator, latent_dim):
-    discriminator.trainable = False
-    gan_input = Variable(torch.FloatTensor(latent_dim))
-    gan_output = discriminator(gan_input)
-    gan = nn.Sequential(gan_input, gan_output)
-    return gan
+def build_dcgan(generator, discriminator):
+    return generator, discriminator
 
-def get_gan(layerG, layerResidual, layerAttention, neuronsG, optimizer_g, layerD, neuronsD, optimizer_d, latent_dim, matrixDim, width, height):
+def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, width,height , lrG,lrD):
     channels = matrixDim[0]
-    generator = modelDc.Generator(latent_dim, channels, width, height, layerG, layerResidual, layerAttention, neuronsG)
-    discriminator = modelDc.Discriminator(channels, layerD, neuronsD)
-    gan = build_dcgan(generator, discriminator, latent_dim)
-    return gan, generator, discriminator, optimizer_d, optimizer_g
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    generator = modelDc.Generator(latent_dim, channels, width, height, neuronsG).to(device)
+    discriminator = modelDc.Discriminator(matrixDim, neuronsD).to(device)
+    optimizer_g = torch.optim.Adam(generator.parameters(), lr=lrG, betas=(0.5, 0.999))
+    optimizer_d = torch.optim.RMSprop(discriminator.parameters(), lr=lrD, alpha=0.9, eps=1e-7)
+    
+    return generator, discriminator, optimizer_g, optimizer_d
 
-def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim, optimizer_d, optimizer_g, n_critic=5, optim=''):
+def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim, optimizer_d, optimizer_g, n_critic=5):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for epoch in range(epochs + 1):
         for _ in range(n_critic):
             idx = np.random.randint(0, data.shape[0], batch_size)
             real_imgs = data[idx]
-            real_imgs = np.transpose(real_imgs, (0, 3, 2, 1))
-            real_imgs = torch.tensor(real_imgs, dtype=torch.float32)
-
-            noise = torch.randn((batch_size, latent_dim))
+           # real_imgs = np.transpose(real_imgs, (0, 3, 2, 1))
+            real_imgs = torch.tensor(real_imgs, dtype=torch.float32).to(device)
+            noise = torch.randn((batch_size, latent_dim)).to(device)
             gen_imgs = generator(noise)
             gp = gradient_penalty(discriminator, real_imgs, gen_imgs)
 
@@ -55,7 +61,7 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
             d_loss.backward()
             optimizer_d.step()
 
-        noise = torch.randn((batch_size, latent_dim))
+        noise = torch.randn((batch_size, latent_dim)).to(device)
         optimizer_g.zero_grad()
         g_loss = -torch.mean(discriminator(generator(noise)))
         g_loss.backward()
@@ -64,4 +70,4 @@ def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_
         print(f"{epoch} [D loss: {d_loss.item()}] [G loss: {g_loss.item()}]")
 
         if epoch % 100 == 0:
-            color.save_images(epoch, generator, discriminator, latent_dim, optim)
+            color.save_images(epoch, generator, discriminator, latent_dim)
