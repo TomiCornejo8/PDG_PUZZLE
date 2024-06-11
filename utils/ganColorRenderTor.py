@@ -30,7 +30,7 @@ def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     noise = torch.randn((examples, latent_dim)).to(device)
     gen_imgs = generator(noise)
-    discriminate = discriminator(torch.tensor(gen_imgs, dtype=torch.float32).to(device))
+    discriminate = discriminator(gen_imgs.clone().detach().to(device))
     plt.figure(figsize=figsize)
     trueLabel = 0
     for i in range(examples):
@@ -47,4 +47,32 @@ def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2
 
     plt.tight_layout()
     plt.savefig(f"{optim}/gen_img_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
+    plt.close()
+
+
+
+def plot_gradients(generator_gradients, discriminator_gradients, epoch):
+    gen_grads = list(map(list, zip(*generator_gradients)))
+    disc_grads = list(map(list, zip(*discriminator_gradients)))
+
+    plt.figure(figsize=(15, 8))
+
+    for i, grad in enumerate(gen_grads):
+        plt.plot(grad, label=f'Gen Layer {i+1}')
+    plt.title('Generator Gradients')
+    plt.xlabel('Epochs')
+    plt.ylabel('Gradient Norm')
+    plt.legend()
+    plt.savefig(f'Gradientes/gen_gradients_epoch_{epoch}.png')
+    plt.close()
+
+    plt.figure(figsize=(15, 5))
+
+    for i, grad in enumerate(disc_grads):
+        plt.plot(grad, label=f'Disc Layer {i+1}')
+    plt.title('Discriminator Gradients')
+    plt.xlabel('Epochs')
+    plt.ylabel('Gradient Norm')
+    plt.legend()
+    plt.savefig(f'Gradientes/disc_gradients_epoch_{epoch}.png')
     plt.close()

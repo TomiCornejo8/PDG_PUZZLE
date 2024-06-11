@@ -17,7 +17,7 @@ def load_data_from_folderTor(channels):
                 df = pd.read_csv(file_path, header=None)
                 data_channels = []
                 for i in range(channels):
-                    channel = np.where(df.values == i, 1, 0)
+                    channel = np.where(df.values == i, 1.0, 0.0)
                     data_channels.append(channel)
                 
                 data_list.append(np.array(data_channels))

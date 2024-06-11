@@ -1,100 +1,16 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class ResidualBlock(nn.Module):
-    def __init__(self, filters):
-        super(ResidualBlock, self).__init__()
-        self.conv1 = nn.Conv2d(filters, filters, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(filters)
-        self.conv2 = nn.Conv2d(filters, filters, kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(filters)
-
-    def forward(self, x):
-        shortcut = x
-        x = F.leaky_relu(self.bn1(self.conv1(x)))
-        x = self.bn2(self.conv2(x))
-        x += shortcut
-        x = F.leaky_relu(x)
-        return x
-
-class AttentionBlock(nn.Module):
-    def __init__(self, filters):
-        super(AttentionBlock, self).__init__()
-        self.f = nn.Conv2d(filters, filters // 8, kernel_size=1)
-        self.g = nn.Conv2d(filters, filters // 8, kernel_size=1)
-        self.h = nn.Conv2d(filters, filters, kernel_size=1)
-        self.beta = nn.Conv2d(filters, filters, kernel_size=1)
-
-    def forward(self, x):
-        f = self.f(x)
-        g = self.g(x)
-        h = self.h(x)
-        s = f + g
-        beta = torch.sigmoid(self.beta(s))
-        o = beta * h
-        o = o + x
-        return o
-
-class Generator(nn.Module):
-    def __init__(self, latent_dim, channels, width, height, layer=2, layerResidual=2, layerAttention=2, neurons=100):
-        super(Generator, self).__init__()
-        self.width = width // 2
-        self.height = height // 2
-        self.dense = nn.Linear(latent_dim, neurons * self.width * self.height)
-        self.bn = nn.BatchNorm1d(neurons * self.width * self.height)
-        self.layers = nn.ModuleList()
-        for i in range(layer):
-            self.layers.append(nn.ConvTranspose2d(neurons, neurons, kernel_size=4, stride=1, padding=1))
-            self.layers.append(nn.BatchNorm2d(neurons))
-            self.layers.append(ResidualBlock(neurons) if layerResidual > 0 else nn.Identity())
-            self.layers.append(AttentionBlock(neurons) if layerAttention > 0 else nn.Identity())
-            if i // 2 != 1:
-                neurons = neurons // 2
-        self.conv_final = nn.ConvTranspose2d(neurons * 2, channels, kernel_size=4, stride=2, padding=1)
-
-    def forward(self, x):
-        x = self.dense(x)
-        x = x.view(x.size(0), -1)  # Flatten the tensor to 2D for BatchNorm1d
-        x = F.leaky_relu(self.bn(x))
-        x = x.view(x.size(0), -1, self.height, self.width)  # Reshape the tensor back to 4D for Conv2d
-        for layer in self.layers:
-            x = F.leaky_relu(layer(x))
-        x = torch.tanh(self.conv_final(x))
-        return x
-class Discriminator(nn.Module):
-    def __init__(self, channels, layer=2, neurons=100):
-        super(Discriminator, self).__init__()
-        self.layers = nn.ModuleList()
-        self.layers.append(nn.Conv2d(channels, neurons, kernel_size=4, stride=2, padding=1))
-        for i in range(layer):
-            self.layers.append(nn.Conv2d(neurons, neurons, kernel_size=4, stride=2, padding=1))
-            self.layers.append(nn.LeakyReLU(0.2))
-            self.layers.append(nn.Dropout(0.3))
-            if i // 2 != 1:
-                neurons = neurons // 2
-        self.fc = nn.Linear(neurons * 4 * 4, 1)  # Ajusta esto según la forma final
-
-    def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
-
-
 from tensorflow import keras
 from keras import layers
+import tensorflow as tf
 
 def residual_block(x, filters, kernel_size=3, strides=1):
     shortcut = x
     x = layers.Conv2D(filters, kernel_size, strides=strides, padding="same")(x)
     x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU()(x)
+    x = layers.LeakyReLU(negative_slope=0.2)(x)
     x = layers.Conv2D(filters, kernel_size, strides=strides, padding="same")(x)
     x = layers.BatchNormalization()(x)
     x = layers.add([x, shortcut])
-    x = layers.LeakyReLU()(x)
+    x = layers.LeakyReLU(negative_slope=0.2)(x)
     return x
 
 def attention_block(x, filters):
@@ -103,61 +19,64 @@ def attention_block(x, filters):
     h = layers.Conv2D(filters, 1, padding='same')(x)
     
     s = layers.add([f, g])
-    beta = layers.Conv2D(filters, 1, padding='same')(s)  # Ensure beta has the same shape as h
+    beta = layers.Conv2D(filters, 1, padding='same')(s)
     beta = layers.Activation('sigmoid')(beta)
     
     o = layers.multiply([beta, h])
     o = layers.add([x, o])
     return o
 
-
-def buildGenerator(layer=2,layerResidual = 2,layerAttention = 2,neurons=100,latent_dim=100, channels=6,width=5,height=5):
-    input = keras.Input(shape=(latent_dim,))
-    width = width // 2  
-    height =  height // 2
-    x = layers.Dense(neurons * width * height)(input)
+def buildGenerator(layer=2, neurons=100, latent_dim=100, channels=6, width=10, height=10):
+    input = tf.keras.Input(shape=(latent_dim,))
+    initial_width = width // 4
+    initial_height = height // 4
+    x = layers.Dense(neurons * initial_width * initial_height)(input)
     x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU()(x)
-    x = layers.Reshape((width, height, neurons))(x)
+    x = layers.LeakyReLU(negative_slope=0.2)(x)
+    x = layers.Reshape((initial_height, initial_width,neurons))(x)
 
     for i in range(layer):
-        x = layers.Conv2DTranspose(neurons , kernel_size=4, strides=1, padding="same")(x)
+        strides = 2 if i < layer - 1 else 1
+        x = layers.Conv2DTranspose(neurons, kernel_size=4, strides=strides, padding="same")(x)
         x = layers.BatchNormalization()(x)
-        x = layers.LeakyReLU()(x)
-        if layerResidual > 0:
-                x = residual_block(x, neurons )
-                layerResidual -= 1
-        if layerAttention > 0:
-                x = attention_block(x, neurons )
-                layerAttention -= 1
-        if i // 2 != 1:
+        x = layers.LeakyReLU(negative_slope=0.2)(x)
+        x = residual_block(x, neurons)
+        x = attention_block(x, neurons)
+        if i == 0:
             neurons = neurons // 2
 
-    #x = layers.Conv2DTranspose(channels, kernel_size=4, strides=2, padding="same", activation="tanh")(x)
-    x = layers.Conv2DTranspose(channels, kernel_size=4, strides=2, padding="same", activation="sigmoid")(x)
-    generator = keras.models.Model(input, x)
+    x = layers.Conv2DTranspose(channels, kernel_size=1, strides=2, padding="same", activation="sigmoid")(x)
+
+    generator = tf.keras.models.Model(input, x)
     generator.summary()
     return generator
+class WeightClippingConstraint(keras.constraints.Constraint):
+    def __init__(self, clip_value):
+        self.clip_value = clip_value
+
+    def __call__(self, w):
+        return keras.backend.clip(w, -self.clip_value, self.clip_value)
 
 # Define el discriminador
 def buildDiscriminator(layer=2,neurons=100,img_shape=6):
+    clip_constraint = WeightClippingConstraint(clip_value=0.01)
     input = keras.Input(shape=img_shape)
-    x = layers.Conv2D(neurons, kernel_size=4, strides=2, padding="same")(input)
-    x = layers.LeakyReLU()(x)
+    x = layers.Conv2D(neurons, kernel_size=4, strides=2, padding="same",kernel_constraint=clip_constraint)(input)
+    x = layers.LeakyReLU(negative_slope=0.2)(x)
     x = layers.Dropout(0.3)(x)
     for i in range(layer):
-        x = layers.Conv2D(neurons, kernel_size=4, strides=2, padding="same")(x)
-        x = layers.LeakyReLU()(x)
+        x = layers.Conv2D(neurons, kernel_size=4, strides=2, padding="same",kernel_constraint=clip_constraint)(x)
+        x = layers.LeakyReLU(negative_slope=0.2)(x)
         x = layers.Dropout(0.3)(x)
         if i // 2 == 0:
-            neurons = neurons * 2
+            neurons = neurons // 2
 
 
     x = layers.Flatten()(x)
-    x = layers.Dense(1)(x)
+    x = layers.Dense(1,kernel_constraint=clip_constraint)(x)
     
     discriminator = keras.models.Model(input, x)
-    discriminator.summary()
+    #discriminator.summary()
     return discriminator
 
 

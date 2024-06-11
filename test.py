@@ -4,7 +4,6 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 from utils import csvReader
 from Gan import Dcgan as dc
-import dcGanpyTorch as dcPy
 from tensorflow.keras.optimizers import Adam,RMSprop
 
 import tensorflow as tf
@@ -13,37 +12,34 @@ channels = 6
 width = 10
 height = 10
 
-layerG = 2
-layerResidual = 2
-layerAttention = 2
-neuronsG = 128
+layerG = 3
+neuronsG = 48
 
-layerD = 7
-neuronsD = 32
+layerD = 3
+neuronsD = 256
 
 dataSet = csvReader.load_data_from_folder(channels)
 epochs = 1200
-batch_size = 256
-latent_dim =  128
+batch_size = 64
+latent_dim =  72
 n_critic = 10
-matrixDim= (width,height,channels)
+matrixDim= (channels,width,height)
 optimizerAdam_g = Adam(
-    learning_rate=0.00005,  # Común entre 0.001 y 0.0001
-    beta_1=0.9,           # Típicamente 0.9
-    beta_2=0.999,         # Típicamente 0.999
+    learning_rate=0.00001,  # Común entre 0.001 y 0.0001
+    beta_1=0.5,           # Típicamente 0.9
     epsilon=1e-7,         # Pequeño número para evitar divisiones por cero           # Generalmente 0.0, pero ajustable
     amsgrad=False         # Puede ser True para usar AMSGrad
 )
 
 optimizerRmsProp_d =  RMSprop(
-    learning_rate=0.0001,   # Usualmente entre 0.001 y 0.0001
+    learning_rate=0.00001,   # Usualmente entre 0.001 y 0.0001
     rho=0.9,               # Comúnmente 0.9
     momentum=0.0,          # Generalmente 0.0, pero puede ajustarse
     epsilon=1e-7,          # Pequeño número para evitar divisiones por cero
     centered=False         # Puede ser True para normalizar gradientes
 )
 
-gan, generator, discriminator, optimizer_d, optimizer_g = dc.get_gan(layerG,layerResidual,layerAttention,
+gan, generator, discriminator, optimizer_d, optimizer_g = dc.get_gan(layerG,
                                                                      neuronsG,optimizerAdam_g,layerD,neuronsD,
                                                                      optimizerRmsProp_d,latent_dim,matrixDim,width,height)
 dc.train_dcgan(generator, discriminator, gan, dataSet, epochs, batch_size, latent_dim, optimizer_d,

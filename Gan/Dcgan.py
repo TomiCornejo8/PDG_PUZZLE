@@ -48,12 +48,12 @@ def build_dcgan(generator, discriminator, latent_dim):
     gan = keras.models.Model(gan_input, gan_output)
     return gan
 
-def get_gan(layerG,layerResidual,layerAttention,neuronsG,optimizer_g,layerD,neuronsD,optimizer_d,latent_dim,matrixDim,width,height):
+def get_gan(layerG,neuronsG,optimizer_g,layerD,neuronsD,optimizer_d,latent_dim,matrixDim,width,height):
     # Parámetros
     img_shape = matrixDim 
     channels = img_shape[-1]
 
-    generator = modelDc.buildGenerator(layerG,layerResidual,layerAttention,neuronsG,latent_dim, channels,width,height)
+    generator = modelDc.buildGenerator(layerG,neuronsG,latent_dim, channels,width,height)
     discriminator=modelDc.buildDiscriminator(layerD,neuronsD,img_shape)
 
     gan = build_dcgan(generator, discriminator, latent_dim)
@@ -64,28 +64,38 @@ def get_gan(layerG,layerResidual,layerAttention,neuronsG,optimizer_g,layerD,neur
 
 def train_dcgan(generator, discriminator, gan, data, epochs, batch_size, latent_dim, optimizer_d, 
                 optimizer_g, n_critic=5,optim=''):
-
     for epoch in range(epochs + 1):
+        if epoch % 10 == 0:
+            
+            if epoch % 100== 0 and epoch >=100:
+                n_critic*=6
+            else:
+                n_critic*=2
         for _ in range(n_critic):
             idx = np.random.randint(0, data.shape[0], batch_size)
             real_imgs = data[idx]
-            real_imgs = np.moveaxis(real_imgs, [0, 1, 2, 3], [0, 3, 2, 1])
+            #real_imgs = np.moveaxis(real_imgs, [0, 1, 2, 3], [0, 3, 2, 1])
             real_imgs = tf.convert_to_tensor(real_imgs, dtype=tf.float32)
             
             noise = tf.random.normal((batch_size, latent_dim), 0, 1, tf.float32)
             gen_imgs = generator(noise, training=False)
+            print(gen_imgs.shape,real_imgs.shape)
             gp = gradient_penalty(discriminator, real_imgs, gen_imgs)
             
             with tf.GradientTape() as tape:
                 d_loss_real = discriminator(real_imgs, training=True)
                 d_loss_fake = discriminator(gen_imgs, training=True)
-                d_loss = tf.reduce_mean(d_loss_fake) - tf.reduce_mean(d_loss_real) + 10 * gp
+                d_loss = tf.reduce_mean(d_loss_fake) - tf.reduce_mean(d_loss_real) + 1 * gp
             
             grads = tape.gradient(d_loss, discriminator.trainable_variables)
             
             if None not in grads and grads:
                 optimizer_d.apply_gradients(zip(grads, discriminator.trainable_variables))
-
+        if epoch % 10 == 0:
+            if epoch %100== 0 and epoch >=100:
+             n_critic = n_critic//6 
+            else:
+                n_critic= n_critic//2
         noise = tf.random.normal((batch_size , latent_dim), 0, 1, tf.float32)
         with tf.GradientTape() as tape:
             g_loss = -tf.reduce_mean(discriminator(generator(noise, training=True)))
