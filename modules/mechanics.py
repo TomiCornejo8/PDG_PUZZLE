@@ -1,3 +1,5 @@
+import numpy as np
+
 # Moves
 RIGHT = (0,1)
 LEFT = (0,-1)
@@ -15,10 +17,27 @@ DOOR = 4
 PLAYER = 5
 
 # Functions
-def lookAhead(player,move):
+
+def getPlayer(dungeon):
+    return np.where(dungeon == PLAYER)
+
+def isDone(dungeon):
+    player = getPlayer(dungeon)
+    enemys = np.where(dungeon == ENEMY)
+    for move in MOVES:
+        tile = lookAhead(player,move)
+        if dungeon[tile[0],tile[1]] == DOOR:
+            door = True
+    if len(enemys) == 0 and door:
+        return True
+    return False
+
+def lookAhead(dungeon,move):
+    player = getPlayer(dungeon)
     return [player[0]+move[0],player[1]+move[1]]
 
-def iceSliding(dungeon,player,move):
+def iceSliding(dungeon,move):
+    player = getPlayer(dungeon)
     dungeon[player[0],player[1]] = EMPTY
 
     while dungeon[lookAhead(player,move)[0],lookAhead(player,move)[1]] == EMPTY: 

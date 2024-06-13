@@ -5,7 +5,7 @@ import random
 # Imports propios
 from modules import ScenarioFiller as SF
 from modules import Fi2Pop
-from utils import colorRender as color
+from helpers import colorRender as color
 from modules import solver as sol
 # CONFIG
 nHight = 10
