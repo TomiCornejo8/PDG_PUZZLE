@@ -26,6 +26,51 @@ def load_data_from_folders():
     return np.array(data_list)
 
 
+def load_data_from_folder_RL_test():
+    resultPath = 'Results'
+    resultsFolders = os.listdir(resultPath)
+    data_list = []
+    maxW,maxH=0,0
+    for experi in resultsFolders:
+        path = os.path.join(experi, 'SolutionsCsv')
+        folder_path = os.path.join(resultPath, path)
+
+        for filename in os.listdir(folder_path):
+            if filename.endswith('.csv'):
+                file_path = os.path.join(folder_path, filename)
+                df = pd.read_csv(file_path, header=None)
+                df=np.array(df)
+                mWith,mHeight = df.shape
+                if maxW < mWith:
+                    maxW = mWith
+                if maxH < mHeight:
+                    maxH = mHeight
+                data_list.append(df)
+
+    # data_array = np.array(data_list)
+    # data_tensor = tf.convert_to_tensor(data_array, dtype=tf.float32)
+    maxDim=0
+    if maxW >= maxH:
+        maxDim = maxW
+    else:
+        maxDim = maxH
+    data_listPadded=[]
+
+    if maxDim % 2 != 0:
+        maxDim+=1
+    file=''
+    for maxtrix in data_list:
+        mWith,mHeight = maxtrix.shape
+        if mWith >= mHeight:
+            maxLDim =mWith 
+        else:
+            maxLDim =mHeight 
+        squareMatrix = np.ones((maxLDim, maxLDim), dtype=maxtrix.dtype)
+        dimM = maxDim - maxLDim 
+        padedMatrix = np.pad(squareMatrix, ((dimM//2,dimM//2),(dimM//2,dimM//2)), 'constant', constant_values=(1))
+        data_listPadded.append(padedMatrix)
+    return data_listPadded,maxDim
+
 def load_data_from_folder_RL():
     resultPath = 'Results'
     resultsFolders = os.listdir(resultPath)
@@ -38,10 +83,8 @@ def load_data_from_folder_RL():
             if filename.endswith('.csv'):
                 file_path = os.path.join(folder_path, filename)
                 df = pd.read_csv(file_path, header=None)
-                data_list.append(np.array(df))
-    # data_array = np.array(data_list)
-    # data_tensor = tf.convert_to_tensor(data_array, dtype=tf.float32)
-
+                df=np.array(df)
+                data_list.append(df)
     return data_list
 
 def load_data_from_folderTor(channels):

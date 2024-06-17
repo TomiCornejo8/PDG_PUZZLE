@@ -22,12 +22,13 @@ def getPlayer(dungeon):
     return np.where(dungeon == PLAYER)
 
 def isDone(dungeon):
-    player = getPlayer(dungeon)
     enemys = np.where(dungeon == ENEMY)
+    door = False
     for move in MOVES:
-        tile = lookAhead(player,move)
+        tile = lookAhead(dungeon,move)
         if dungeon[tile[0],tile[1]] == DOOR:
             door = True
+            break
     if len(enemys) == 0 and door:
         return True
     return False
@@ -37,14 +38,13 @@ def lookAhead(dungeon,move):
     return [player[0]+move[0],player[1]+move[1]]
 
 def iceSliding(dungeon,move):
-    player = getPlayer(dungeon)
-    dungeon[player[0],player[1]] = EMPTY
-
-    while dungeon[lookAhead(player,move)[0],lookAhead(player,move)[1]] == EMPTY: 
-        player = lookAhead(player,move)
-        
-    dungeon[player[0],player[1]] = PLAYER
-
+    
+    while dungeon[lookAhead(dungeon,move)[0],lookAhead(dungeon,move)[1]] == EMPTY:
+        player0 = getPlayer(dungeon) 
+        player1 = lookAhead(dungeon,move)
+        dungeon[player0[0],player0[1]] = EMPTY
+        dungeon[player1[0],player1[1]] = PLAYER
+          
     return dungeon
 
 def killEnemy(dungeon,enemy):
@@ -55,7 +55,7 @@ def getAllowMoves(dungeon,player):
     notAllow = [WALL,BLOCK,ENEMY,DOOR]
     newMoves = []
     for move in MOVES:
-        tile = lookAhead(player,move)
+        tile = lookAhead(dungeon,move)
         dungeonTile = dungeon[tile[0],tile[1]]
         if not dungeonTile in notAllow:
             newMoves.append(move)
@@ -65,7 +65,7 @@ def getAllowMoves(dungeon,player):
 def getMeleeEnemys(dungeon,player):
     enemys = []
     for move in MOVES:
-        tile = lookAhead(player,move)
+        tile = lookAhead(dungeon,move)
         if dungeon[tile[0],tile[1]] == ENEMY:
             enemys.append(tile)
     return enemys
