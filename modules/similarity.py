@@ -62,7 +62,7 @@ def promedio_distancia_edicion(matrices):
     promedio_porcentaje = np.mean(porcentajes)
     return promedio_porcentaje
 
-folder_path = 'results/Experiment 27-05/SolutionsCsv'
+folder_path = 'results/Experiment 18-06/SolutionsCsv'
 matrices = read_solutions(folder_path)
 
 start = T.time()

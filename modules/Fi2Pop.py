@@ -4,6 +4,8 @@ import random
 from modules import mechanics as M
 from modules import solver
 
+import time as T
+
 class Individual:
     def __init__(self, solution, fitness,nSol,minMoves):
         self.solution = solution
@@ -149,6 +151,7 @@ def elitism(population,nPop):
     return np.array(population)
 
 def FI2Pop(population,maxIter, nPop,mutationFactor,maxMoves):
+    start = T.time()
     feapop, infpop = initialPopulation(population)
     it = 0
 
@@ -191,4 +194,5 @@ def FI2Pop(population,maxIter, nPop,mutationFactor,maxMoves):
 
         if feapop[0].minMoves >= maxMoves or it > maxIter: break
     
-    return feapop[0].solution,feapop[0].fitness ,feapop[0].nSol, feapop[0].minMoves
+    stop = T.time() - start
+    return feapop[0].solution,feapop[0].fitness ,feapop[0].nSol, feapop[0].minMoves,stop

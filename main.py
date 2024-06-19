@@ -20,7 +20,7 @@ mutationFactor = 0.5
 
 maxIter = 40
 maxMoves = 25
-experiments = 1000
+experiments = 20
 newMapShape = 10
 
 # MAIN
@@ -28,6 +28,9 @@ inicio = T.time()
 print(f"Se inicia la generación del mapa")
 
 borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
+
+meanStop = 0
+stops = []
 
 for i in range(1,experiments+1):
     print(f"Experimento {i}")
@@ -37,8 +40,15 @@ for i in range(1,experiments+1):
     if i % newMapShape == 0:
             borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
     maxMoves = random.randint(20,25)
-    dungeon, fitness , nSol, minMoves = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor,maxMoves)
+    dungeon, fitness , nSol, minMoves, stop = Fi2Pop.FI2Pop(population,maxIter,nPop,mutationFactor,maxMoves)
+    meanStop += stop
+    stops.append(stop)
     color.renderMatrix(dungeon,fitness, nSol, minMoves)
 
+meanStop /= experiments
 
-print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos")
+print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos. Tiempo promedio {meanStop}")
+
+for stopi in stops:
+     print(f"{stopi}", end=", ")
+print("")
