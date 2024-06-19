@@ -3,6 +3,7 @@ import numpy as np
 from anytree import Node
 from collections import deque
 import copy
+import multiprocessing as mul
 
 # Internal
 from modules import mechanics as M
@@ -84,7 +85,7 @@ def playable(dungeon):
     return False
 
 def nSolutions(dungeon):
-    solutions = solve(dungeon)
+    solutions = solvePara(dungeon)
     
     n = len(solutions)
     if n==0: return n,0
@@ -200,3 +201,60 @@ def solverWithMoves(dungeon):
             else:
                 routes,memoryStates = setRoutesTreeWMoves(routes,memoryStates,newDungeon,currentNode)
     return solutions  
+
+def paraEnemys(currentDungeon,args):
+    player,routes,memoryStates,currentNode=args
+    solutions=[]
+    enemys = M.getMeleeEnemys(currentDungeon,player)
+    for enemy in enemys:
+        newDungeon = currentDungeon.copy()
+        
+        newDungeon = M.killEnemy(newDungeon,enemy)
+
+        if getNEnemys(newDungeon) == 0 and inDoor(player,newDungeon): 
+            solutions.append(getRoutes(Node(newDungeon,parent=currentNode)))
+            return routes,memoryStates,solutions
+        else:
+            routes,memoryStates = setRoutesTree(routes,memoryStates,newDungeon,currentNode)
+
+    return routes,memoryStates,None
+
+def paraMoves(currentDungeon,args):
+    player,routes,memoryStates,currentNode=args
+    solutions=[]
+    moves = M.getAllowMoves(currentDungeon,player)
+    for move in moves:
+        newDungeon = currentDungeon.copy()
+
+        newDungeon = M.iceSliding(newDungeon,player,move)
+        newPlayer  = getPlayer(newDungeon)
+        
+        if getNEnemys(newDungeon) == 0 and inDoor(newPlayer,newDungeon): 
+            solutions.append(getRoutes(Node(newDungeon,parent=currentNode)))
+            return routes,memoryStates,solutions
+        else:
+            routes,memoryStates = setRoutesTree(routes,memoryStates,newDungeon,currentNode)
+    return routes,memoryStates,None
+
+def solvePara(dungeon):
+    routes = deque()
+    memoryStates = []
+
+    root = Node(dungeon.copy())
+    routes.append(root)
+    memoryStates.append(getDungeonHash(dungeon))
+    solutions = []
+
+    while routes:
+        currentNode = routes.popleft()
+        currentDungeon = currentNode.name
+        player = getPlayer(currentDungeon)
+        args=[player,routes,memoryStates,currentNode]
+        with mul.Pool(processes=2) as pool:
+            auxRoutesM,auxmemoryStatesM,auxSolutionsM = pool.starmap(paraMoves, [(currentDungeon, arg) for arg in args])
+            auxRoutesE,auxmemoryStatesE,auxSolutionsE = pool.starmap(paraEnemys, [(currentDungeon, arg) for arg in args])
+            
+
+
+
+    return solutions

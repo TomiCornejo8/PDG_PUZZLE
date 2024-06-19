@@ -20,7 +20,7 @@ mutationFactor = 0.5
 
 maxIter = 40
 maxMoves = 25
-experiments = 20
+experiments = 5
 newMapShape = 10
 
 # MAIN
