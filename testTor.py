@@ -10,13 +10,16 @@ torch.cuda.empty_cache()
 channels = 6
 width = 10
 height = 10
-neuronsG = 144
+
+neuronsG = 174
 neuronsD = 6
+
 dataSet = csvReader.load_data_from_folderTor(channels)
-epochs = 5000
-batch_size = 36
+
+epochs = 2000
+batch_size = 24
 latent_dim = 96
-n_critic = 10
+n_critic = 5
 matrixDim = (channels, width, height)
 lrG=0.00009
 lrD=0.00001

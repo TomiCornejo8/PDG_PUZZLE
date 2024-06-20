@@ -28,7 +28,7 @@ def matrix_to_color_image(matrix):
 
 def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2, 5), figsize=(18, 6), optim='adam'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    noise = torch.randn((examples, latent_dim)).to(device)
+    noise = torch.randn((examples, latent_dim),device=device)
     gen_imgs = generator(noise)
     discriminate = discriminator(gen_imgs.clone().detach().to(device))
     plt.figure(figsize=figsize)
@@ -55,7 +55,7 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     gen_grads = list(map(list, zip(*generator_gradients)))
     disc_grads = list(map(list, zip(*discriminator_gradients)))
 
-    plt.figure(figsize=(15, 8))
+    plt.figure(figsize=(20, 15))
 
     for i, grad in enumerate(gen_grads):
         plt.plot(grad, label=f'Gen Layer {i+1}')

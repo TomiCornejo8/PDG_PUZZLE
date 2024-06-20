@@ -9,21 +9,21 @@ from tensorflow.keras.optimizers import Adam,RMSprop
 import tensorflow as tf
 # Lee todos los archivos CSV en la carpeta y convierte cada uno en un array de 10x10
 channels = 6
-width = 10
-height = 10
+width = 12
+height = 12
 
 layerG = 3
-neuronsG = 48
+neuronsG = 24
 
 layerD = 3
-neuronsD = 256
+neuronsD = 120
 
 dataSet = csvReader.load_data_from_folder(channels)
 epochs = 1200
-batch_size = 64
-latent_dim =  72
-n_critic = 10
-matrixDim= (channels,width,height)
+batch_size = 36
+latent_dim =  24
+n_critic = 5
+matrixDim= (width,height,channels)
 optimizerAdam_g = Adam(
     learning_rate=0.00001,  # Común entre 0.001 y 0.0001
     beta_1=0.5,           # Típicamente 0.9
@@ -31,17 +31,16 @@ optimizerAdam_g = Adam(
     amsgrad=False         # Puede ser True para usar AMSGrad
 )
 
-optimizerRmsProp_d =  RMSprop(
-    learning_rate=0.00001,   # Usualmente entre 0.001 y 0.0001
-    rho=0.9,               # Comúnmente 0.9
-    momentum=0.0,          # Generalmente 0.0, pero puede ajustarse
-    epsilon=1e-7,          # Pequeño número para evitar divisiones por cero
-    centered=False         # Puede ser True para normalizar gradientes
+optimizerRmsProp_d =  Adam(
+    learning_rate=0.00005,  # Común entre 0.001 y 0.0001
+    beta_1=0.5,           # Típicamente 0.9
+    epsilon=1e-7,         # Pequeño número para evitar divisiones por cero           # Generalmente 0.0, pero ajustable
+    amsgrad=False         # Puede ser True para usar AMSGrad
 )
 
 gan, generator, discriminator, optimizer_d, optimizer_g = dc.get_gan(layerG,
                                                                      neuronsG,optimizerAdam_g,layerD,neuronsD,
-                                                                     optimizerRmsProp_d,latent_dim,matrixDim,width,height)
+                                                                     optimizerRmsProp_d,latent_dim,matrixDim)
 dc.train_dcgan(generator, discriminator, gan, dataSet, epochs, batch_size, latent_dim, optimizer_d,
                 optimizer_g, n_critic,"adam")  
 

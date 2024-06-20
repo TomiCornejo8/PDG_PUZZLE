@@ -35,7 +35,7 @@ def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD):
     discriminator = modelDc.Discriminator(matrixDim, neuronsD).to(device)
 
     optimizer_g = torch.optim.Adam(generator.parameters(), lr=lrG, betas=(0.5, 0.999))
-    scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=1000, gamma=0.9)
+    scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=100, gamma=0.1)
 
     optimizer_d = torch.optim.Adam(generator.parameters(), lr=lrD, betas=(0.5, 0.999))
     scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=1000, gamma=0.9)
@@ -55,8 +55,10 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         print("Using GPU")
+        
     summary(generator, (latent_dim,))
     summary(discriminator, (matrixDim))
+
     discriminator_gradients = []
     generator_gradients = []
     for epoch in range(epochs + 1):
@@ -65,14 +67,14 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
             real_imgs = data[idx]
             #real_imgs = np.transpose(real_imgs, (0, 3, 2, 1))
             real_imgs = torch.tensor(real_imgs, dtype=torch.float32).to(device)
-            noise = torch.randn((batch_size, latent_dim)).to(device)
+            noise = torch.randn((batch_size, latent_dim),device=device)
             gen_imgs = generator(noise).to(device)
             gp = gradient_penalty(discriminator, real_imgs, gen_imgs)
 
             optimizer_d.zero_grad()
             d_loss_real = discriminator(real_imgs).to(device)
             d_loss_fake = discriminator(gen_imgs).to(device)
-            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 10 * gp
+            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 2 * gp
             d_loss.backward()
 
             torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm)
@@ -82,7 +84,7 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
             optimizer_d.step()
             
 
-        noise = torch.randn((batch_size, latent_dim)).to(device)
+        noise = torch.randn((batch_size, latent_dim),device=device)
         optimizer_g.zero_grad()
         g_loss = -torch.mean(discriminator(generator(noise).to(device)))
         g_loss.backward()
