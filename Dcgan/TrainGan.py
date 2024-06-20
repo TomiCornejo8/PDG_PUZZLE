@@ -15,7 +15,7 @@ def wasserstein_loss(y_true, y_pred):
 
 def gradient_penalty(discriminator, real_samples, fake_samples):
     alpha = torch.rand(real_samples.size(0), 1, 1, 1).to(real_samples.device)
-    interpolated = alpha * real_samples + (1 - alpha) * fake_samples
+    interpolated = alpha * real_samples + ((1 - alpha) * fake_samples)
     interpolated.requires_grad_(True)
     d_interpolated = discriminator(interpolated)
     gradients = torch.autograd.grad(outputs=d_interpolated, inputs=interpolated,
@@ -56,8 +56,8 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
     if torch.cuda.is_available():
         print("Using GPU")
         
-    summary(generator, (latent_dim,))
-    summary(discriminator, (matrixDim))
+    #summary(generator, (latent_dim,))
+    #summary(discriminator, (matrixDim))
 
     discriminator_gradients = []
     generator_gradients = []
@@ -74,7 +74,7 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
             optimizer_d.zero_grad()
             d_loss_real = discriminator(real_imgs).to(device)
             d_loss_fake = discriminator(gen_imgs).to(device)
-            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 2 * gp
+            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 5 * gp
             d_loss.backward()
 
             torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm)

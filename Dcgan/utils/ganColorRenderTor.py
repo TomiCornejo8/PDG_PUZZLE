@@ -55,7 +55,7 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     gen_grads = list(map(list, zip(*generator_gradients)))
     disc_grads = list(map(list, zip(*discriminator_gradients)))
 
-    plt.figure(figsize=(15, 8))
+    plt.figure(figsize=(15, 13))
 
     for i, grad in enumerate(gen_grads):
         plt.plot(grad, label=f'Gen Layer {i+1}')
@@ -66,7 +66,7 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     plt.savefig(f'Gradientes/gen_gradients_epoch_{epoch}.png')
     plt.close()
 
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(12, 5))
 
     for i, grad in enumerate(disc_grads):
         plt.plot(grad, label=f'Disc Layer {i+1}')

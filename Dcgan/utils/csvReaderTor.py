@@ -26,4 +26,6 @@ def load_data_from_folderTor(channels):
                 data_list.append(np.array(data_channels))
     data_array = np.array(data_list)
     data_tensor = torch.tensor(data_array, dtype=torch.float32)
-    return np.array(data_tensor)
+    dataSet=np.array(data_tensor)
+    print(f"Dataset Size: {dataSet.shape[0]}")
+    return dataSet
