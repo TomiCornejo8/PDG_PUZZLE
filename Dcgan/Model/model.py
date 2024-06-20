@@ -9,7 +9,7 @@ class ResidualBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(filters)
         self.conv2 = nn.Conv2d(filters, filters, kernel_size, stride=strides, padding=1)
         self.bn2 = nn.BatchNorm2d(filters)
-        self.leaky_relu = nn.LeakyReLU(0.2)
+        self.leaky_relu = nn.LeakyReLU(0.2, inplace=True)
 
     def forward(self, x):
         shortcut = x
@@ -54,12 +54,14 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(neurons, neurons // 2, 4, stride=2, padding=1),
             nn.BatchNorm2d(neurons // 2),
             nn.LeakyReLU(0.2, inplace=True),
+            nn.Dropout(0.3),
             ResidualBlock(neurons // 2),
             AttentionBlock(neurons // 2),
             
             nn.ConvTranspose2d(neurons // 2, neurons // 4, 4, stride=2, padding=1),
             nn.BatchNorm2d(neurons // 4),
             nn.LeakyReLU(0.2, inplace=True),
+            nn.Dropout(0.3),
             ResidualBlock(neurons // 4),
             AttentionBlock(neurons // 4),
             
