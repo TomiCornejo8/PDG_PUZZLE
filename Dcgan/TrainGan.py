@@ -1,9 +1,7 @@
 import torch
-import numpy as np
 from utils import ganColorRenderTor as color
 from Model import model as modelDc
 import os
-import torch
 import numpy as np
 from torchsummary import summary
 
@@ -56,8 +54,8 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
     if torch.cuda.is_available():
         print("Using GPU")
         
-    summary(generator, (latent_dim,))
-    summary(discriminator, (matrixDim))
+    #summary(generator, (latent_dim,))
+    #summary(discriminator, (matrixDim))
 
     discriminator_gradients = []
     generator_gradients = []

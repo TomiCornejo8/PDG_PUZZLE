@@ -1,4 +1,3 @@
-import os
 import torch
 import torch.optim as optim
 from utils import csvReaderTor as csvReader

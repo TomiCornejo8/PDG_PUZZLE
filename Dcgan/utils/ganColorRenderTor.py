@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+import os
+def createFolder(folderName):
+    if not os.path.exists(folderName):
+        os.makedirs(folderName)
 
 def value_to_color(value):
     if value == 0:
@@ -44,9 +48,9 @@ def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2
         else:
             plt.text(0.5, -0.1, "Prediction: True", transform=axes.transAxes, ha="center", fontsize=14)
             trueLabel += 1
-
+    createFolder("Dcgan/Maps")
     plt.tight_layout()
-    plt.savefig(f"Mapas/gen_img_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
+    plt.savefig(f"Dcgan/Maps/gen_img_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
     plt.close()
 
 
@@ -56,14 +60,14 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     disc_grads = list(map(list, zip(*discriminator_gradients)))
 
     plt.figure(figsize=(15, 8))
-
+    createFolder("Dcgan/Gradients")
     for i, grad in enumerate(gen_grads):
         plt.plot(grad, label=f'Gen Layer {i+1}')
     plt.title('Generator Gradients')
     plt.xlabel('Epochs')
     plt.ylabel('Gradient Norm')
     plt.legend()
-    plt.savefig(f'Gradientes/gen_gradients_epoch_{epoch}.png')
+    plt.savefig(f'Dcgan/Gradients/gen_gradients_epoch_{epoch}.png')
     plt.close()
 
     plt.figure(figsize=(15, 5))
@@ -74,5 +78,5 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     plt.xlabel('Epochs')
     plt.ylabel('Gradient Norm')
     plt.legend()
-    plt.savefig(f'Gradientes/disc_gradients_epoch_{epoch}.png')
+    plt.savefig(f'Dcgan/Gradients/disc_gradients_epoch_{epoch}.png')
     plt.close()
