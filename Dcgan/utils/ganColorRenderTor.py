@@ -50,7 +50,7 @@ def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2
             trueLabel += 1
     createFolder("Dcgan/Maps")
     plt.tight_layout()
-    plt.savefig(f"Dcgan/Maps/gen_img_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
+    plt.savefig(f"Dcgan/Maps/genImg_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
     plt.close()
 
 
@@ -59,24 +59,23 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     gen_grads = list(map(list, zip(*generator_gradients)))
     disc_grads = list(map(list, zip(*discriminator_gradients)))
 
-    plt.figure(figsize=(15, 8))
-    createFolder("Dcgan/Gradients")
+    plt.figure(figsize=(13, 14))
     for i, grad in enumerate(gen_grads):
         plt.plot(grad, label=f'Gen Layer {i+1}')
-    plt.title('Generator Gradients')
+    plt.title(f'Generator Gradients {epoch}')
     plt.xlabel('Epochs')
     plt.ylabel('Gradient Norm')
     plt.legend()
-    plt.savefig(f'Dcgan/Gradients/gen_gradients_epoch_{epoch}.png')
+    plt.savefig(f'Dcgan/Gradients/gen_gradients.png')
     plt.close()
 
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(12, 10))
 
     for i, grad in enumerate(disc_grads):
         plt.plot(grad, label=f'Disc Layer {i+1}')
-    plt.title('Discriminator Gradients')
+    plt.title(f'Discriminator Gradients {epoch}')
     plt.xlabel('Epochs')
     plt.ylabel('Gradient Norm')
     plt.legend()
-    plt.savefig(f'Dcgan/Gradients/disc_gradients_epoch_{epoch}.png')
+    plt.savefig(f'Dcgan/Gradients/disc_gradients.png')
     plt.close()

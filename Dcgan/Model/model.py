@@ -2,6 +2,20 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# Función para inicializar los pesos
+def weights_init(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+        nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+    elif isinstance(m, nn.Linear):
+        nn.init.xavier_uniform_(m.weight)
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+    elif isinstance(m, nn.BatchNorm2d):
+        nn.init.constant_(m.weight, 1)
+        nn.init.constant_(m.bias, 0)
+
 class ResidualBlock(nn.Module):
     def __init__(self, filters, kernel_size=3, strides=1):
         super(ResidualBlock, self).__init__()
@@ -10,6 +24,9 @@ class ResidualBlock(nn.Module):
         self.conv2 = nn.Conv2d(filters, filters, kernel_size, stride=strides, padding=1)
         self.bn2 = nn.BatchNorm2d(filters)
         self.leaky_relu = nn.LeakyReLU(0.2, inplace=True)
+        
+        # Inicialización de pesos
+        self.apply(weights_init)
 
     def forward(self, x):
         shortcut = x
@@ -30,6 +47,9 @@ class AttentionBlock(nn.Module):
         self.h_conv = nn.Conv2d(filters, filters, 1)
         self.beta_conv = nn.Conv2d(filters // 4, filters, 1)
         self.sigmoid = nn.Sigmoid()
+        
+        # Inicialización de pesos
+        self.apply(weights_init)
 
     def forward(self, x):
         f = self.f_conv(x)
@@ -54,24 +74,30 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(neurons, neurons // 2, 4, stride=2, padding=1),
             nn.BatchNorm2d(neurons // 2),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout(0.3),
+            nn.Dropout(0.2),
             ResidualBlock(neurons // 2),
             AttentionBlock(neurons // 2),
             
             nn.ConvTranspose2d(neurons // 2, neurons // 4, 4, stride=2, padding=1),
             nn.BatchNorm2d(neurons // 4),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout(0.3),
+            nn.Dropout(0.5),
             ResidualBlock(neurons // 4),
             AttentionBlock(neurons // 4),
             
             nn.Conv2d(neurons // 4, channels, 1, stride=1, padding=1),
             nn.Sigmoid()
         )
+        
+        # Inicialización de pesos
+        self.apply(weights_init)
 
     def forward(self, x):
         out = self.l1(x)
         out = out.view(out.shape[0], -1, self.width, self.height)  # Ajuste dinámico de los canales
+        # Agregar ruido gaussiano aquí
+        noise = torch.randn_like(out) * 0.1  # Ajusta la escala del ruido según sea necesario
+        out = out + noise
         img = self.conv_blocks(out)
         return img
 
@@ -83,7 +109,6 @@ class WeightClippingConstraint:
         if hasattr(module, 'weight'):
             module.weight.data = torch.clamp(module.weight.data, -self.clip_value, self.clip_value)
 
-
 class Discriminator(nn.Module):
     def __init__(self, img_shape=(6, 10, 10), neurons=128, clip_value=0.01):
         super(Discriminator, self).__init__()
@@ -94,18 +119,21 @@ class Discriminator(nn.Module):
 
         self.layers.append(nn.Sequential(
             nn.Conv2d(img_shape[0], neurons * 4, 2, stride=2, padding=1),
+            nn.BatchNorm2d(neurons * 4),
             nn.LeakyReLU(0.2),
             nn.Dropout(0.3)
         ))
 
         self.layers.append(nn.Sequential(
             nn.Conv2d(neurons * 4, neurons * 8, 2, stride=2, padding=1),
+            nn.BatchNorm2d(neurons * 8),
             nn.LeakyReLU(0.2),
             nn.Dropout(0.3)
         ))
 
         self.layers.append(nn.Sequential(
             nn.Conv2d(neurons * 8, neurons * 16, 2, stride=2, padding=1),
+            nn.BatchNorm2d(neurons * 16),
             nn.LeakyReLU(0.2),
             nn.Dropout(0.3)
         ))
@@ -113,6 +141,9 @@ class Discriminator(nn.Module):
         final_size = neurons * 9 * 16
         self.final_layer = nn.Linear(final_size, 1)
         self.apply(WeightClippingConstraint(clip_value))
+        
+        # Inicialización de pesos
+        self.apply(weights_init)
 
     def forward(self, x):
         for layer in self.layers:
