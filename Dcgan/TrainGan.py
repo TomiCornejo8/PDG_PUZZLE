@@ -5,7 +5,6 @@ import os
 import numpy as np
 from torchsummary import summary
 
-# Limitar el uso de la GPU al 50%
 
 
 def wasserstein_loss(y_true, y_pred):
@@ -26,18 +25,17 @@ def gradient_penalty(discriminator, real_samples, fake_samples):
 def build_dcgan(generator, discriminator):
     return generator, discriminator
 
-def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD):
+def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD,n_critic):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    stepSize=100
     generator = modelDc.Generator(latent_dim, matrixDim[0], matrixDim[1], matrixDim[1], neuronsG).to(device)
     discriminator = modelDc.Discriminator(matrixDim, neuronsD).to(device)
 
     optimizer_g = torch.optim.Adam(generator.parameters(), lr=lrG, betas=(0.5, 0.999))
-    scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=100, gamma=0.1)
+    scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=stepSize, gamma=0.1)
 
     optimizer_d = torch.optim.Adam(generator.parameters(), lr=lrD, betas=(0.5, 0.999))
-    scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=1000, gamma=0.9)
-    #torch.optim.RMSprop(discriminator.parameters(), lr=lrD, alpha=0.9, eps=1e-7)
+    scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=stepSize * n_critic, gamma=0.9)
     return generator, discriminator, optimizer_g,scheduler_g, optimizer_d,scheduler_d
 
 def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
@@ -53,7 +51,7 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         print("Using GPU")
-        
+
     #summary(generator, (latent_dim,))
     #summary(discriminator, (matrixDim))
 
@@ -63,7 +61,6 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
         for _ in range(n_critic):
             idx = np.random.randint(0, data.shape[0], batch_size)
             real_imgs = data[idx]
-            #real_imgs = np.transpose(real_imgs, (0, 3, 2, 1))
             real_imgs = torch.tensor(real_imgs, dtype=torch.float32).to(device)
             noise = torch.randn((batch_size, latent_dim),device=device)
             gen_imgs = generator(noise).to(device)

@@ -25,7 +25,7 @@ newMapShape = 10
 
 # MAIN
 inicio = T.time()
-print(f"Se inicia la generación del mapa")
+print(f"Se inicia la generación de {experiments} mapas")
 
 borderDungeon = SF.scenarioFiller(nHight,mWidth,expantionFactor)
 
@@ -47,8 +47,4 @@ for i in range(1,experiments+1):
 
 meanStop /= experiments
 
-print(f"Mapa <result.csv> generado en {T.time() - inicio} segundos. Tiempo promedio {meanStop}")
-
-for stopi in stops:
-     print(f"{stopi}", end=", ")
-print("")
+print(f"Mapas generados en {T.time() - inicio} segundos. Tiempo promedio {meanStop} por mapa.")

@@ -24,7 +24,7 @@ lrG=0.00009
 lrD=0.00001
 # Inicializar los modelos
 generator, discriminator, optimizer_g,scheduler_g, optimizer_d,scheduler_d = Dcgan.get_gan(neuronsG,neuronsD, 
-                                                                   latent_dim, matrixDim,lrG,lrD)
+                                                                   latent_dim, matrixDim,lrG,lrD,n_critic)
 
 
 # Entrenar el modelo

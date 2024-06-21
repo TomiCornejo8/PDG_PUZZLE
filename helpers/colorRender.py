@@ -13,7 +13,6 @@ def csv_to_numpy_matrix(file):
         reader = csv.reader(csvfile)
         data = list(reader)
     
-    # Convertimos los datos leídos a un array de NumPy
     numpy_matrix = np.array(data, dtype=int)
     return numpy_matrix
 
@@ -25,13 +24,11 @@ def bestSolution(dungeon):
             if len(sol) < len(best):
                 best = sol
     return best
-# Función para crear una carpeta si no existe
-def crear_carpeta_si_no_existe(nombre_carpeta):
+def createFolder(nombre_carpeta):
     if not os.path.exists(nombre_carpeta):
         os.makedirs(nombre_carpeta)
 
-# Función para obtener el número siguiente para el nombre del archivo
-def obtener_numero_siguiente_carpeta(nombre_carpeta):
+def getFileNumber(nombre_carpeta):
     if not os.path.exists(nombre_carpeta):
         return 1
     else:
@@ -39,15 +36,15 @@ def obtener_numero_siguiente_carpeta(nombre_carpeta):
 
 def createFoldersCsv(map):
     now = datetime.now()
-    formato_fecha = now.strftime("%d-%m")
+    dateFormat = now.strftime("%d-%m")
 
-    ExperimentFolder = "Results/Experiment " + formato_fecha
+    ExperimentFolder = "Results/Experiment " + dateFormat
     solutionsFolder = os.path.join(ExperimentFolder,"SolutionsCsv")
 
-    crear_carpeta_si_no_existe(ExperimentFolder)
-    crear_carpeta_si_no_existe(solutionsFolder)
+    createFolder(ExperimentFolder)
+    createFolder(solutionsFolder)
 
-    nFile = obtener_numero_siguiente_carpeta(solutionsFolder)
+    nFile = getFileNumber(solutionsFolder)
     csvName = f"Solution_{nFile}.csv"
     csvFileName = os.path.join(solutionsFolder, csvName)
 
@@ -56,25 +53,25 @@ def createFoldersCsv(map):
 
 def createFoldersExcel(wb):
     now = datetime.now()
-    formato_fecha = now.strftime("%d-%m")
+    dateFormat = now.strftime("%d-%m")
 
-    ExperimentFolder = "Results/Experiment " + formato_fecha
+    ExperimentFolder = "Results/Experiment " + dateFormat
     dungeonsFolder = os.path.join(ExperimentFolder, "Dungeons")
 
-    crear_carpeta_si_no_existe(ExperimentFolder)
-    crear_carpeta_si_no_existe(dungeonsFolder)
+    createFolder(ExperimentFolder)
+    createFolder(dungeonsFolder)
 
-    nFile= obtener_numero_siguiente_carpeta(dungeonsFolder)
+    nFile= getFileNumber(dungeonsFolder)
     dungeonName = f"Dungeon_{nFile}.xlsx"
     excelFileName = os.path.join(dungeonsFolder,dungeonName)
 
     wb.save(f"{excelFileName}")
 
-def ajustar_ancho_columnas(worksheet,middleColumn):
+def fixColumWidth(worksheet,middleColumn):
     i=1
     for column_cells in worksheet.columns:
         max_length = 0
-        column = column_cells[0].column_letter  # Obtiene la letra de la columna
+        column = column_cells[0].column_letter  
         for cell in column_cells:
             try:
                 if len(str(cell.value)) > max_length:
@@ -88,45 +85,44 @@ def ajustar_ancho_columnas(worksheet,middleColumn):
  
 def renderMatrix(map, fitness, nSol, minMoves):
     wb = Workbook()
-    hoja = wb.active
+    sheet = wb.active
     for fila_idx, fila in enumerate(map, start=1):
-        for celda_idx, valor_celda in enumerate(fila, start=1):
-            hoja.cell(row=fila_idx, column=celda_idx, value=valor_celda)
-            if valor_celda == 0:
+        for tile_idx, tileValue in enumerate(fila, start=1):
+            sheet.cell(row=fila_idx, column=tile_idx, value=tileValue)
+            if tileValue == 0:
                 color = "F0F0F0"
-            elif valor_celda == 1:
+            elif tileValue == 1:
                 color = "C0C0C0"
-            elif valor_celda == 2:
+            elif tileValue == 2:
                 color = "D2B48C"
-            elif valor_celda == 3:
+            elif tileValue == 3:
                 color = "FFB6C1"
-            elif valor_celda == 4:
+            elif tileValue == 4:
                 color = "98FB98"
-            elif valor_celda == 5:
+            elif tileValue == 5:
                 color = "ADD8E6"
-            relleno = PatternFill(start_color=color, end_color=color, fill_type="solid")
-            hoja.cell(row=fila_idx, column=celda_idx).fill = relleno
+            filler = PatternFill(start_color=color, end_color=color, fill_type="solid")
+            sheet.cell(row=fila_idx, column=tile_idx).fill = filler
 
 
    
     lastRow = (map.shape[0] // 2) - 1
     middleColumn = map.shape[1] + 2
 
-    hoja.cell(row=lastRow, column=middleColumn,value="Fitness")
-    hoja.cell(row=lastRow , column=middleColumn +1,value="Number of Solutions")
-    hoja.cell(row=lastRow , column=middleColumn +2,value="Minimum Moves")
+    sheet.cell(row=lastRow, column=middleColumn,value="Fitness")
+    sheet.cell(row=lastRow , column=middleColumn +1,value="Number of Solutions")
+    sheet.cell(row=lastRow , column=middleColumn +2,value="Minimum Moves")
 
     lastRow += 1
-    hoja.cell(row=lastRow, column=middleColumn,value=fitness)
-    hoja.cell(row=lastRow , column=middleColumn +1,value=nSol)
-    hoja.cell(row=lastRow , column=middleColumn +2,value=minMoves)
+    sheet.cell(row=lastRow, column=middleColumn,value=fitness)
+    sheet.cell(row=lastRow , column=middleColumn +1,value=nSol)
+    sheet.cell(row=lastRow , column=middleColumn +2,value=minMoves)
 
-    ajustar_ancho_columnas(hoja,middleColumn)
+    fixColumWidth(sheet,middleColumn)
    
 
     createFoldersExcel(wb)
-    nArchivo=createFoldersCsv(map)
-    #renderMatrixQueue(nArchivo)
+    createFoldersCsv(map)
     renderMatrixQueueWMoves(map)
 
 def bestSolutionWMoves(dungeon):
@@ -141,46 +137,46 @@ def renderMatrixQueueWMoves(dungeon):
     dungeonWMoves=S.solveGameWithMoves(dungeon)
     matrix_queue = bestSolutionWMoves(dungeonWMoves)
     wb = Workbook()
-    hoja = wb.active
+    sheet = wb.active
 
-    columna_inicio = 1
+    startColumn = 1
     while matrix_queue:
         map = matrix_queue.pop()
         lastRow = map.dungeon.shape[1] + 2 
         middleColumn = (map.dungeon.shape[0] // 2) + 1
         for fila_idx, fila in enumerate(map.dungeon, start=1):
-            for celda_idx, valor_celda in enumerate(fila, start=1):
-                hoja.cell(row=fila_idx, column=celda_idx + columna_inicio - 1, value=valor_celda)
-                if valor_celda == 0:
+            for tile_idx, tileValue in enumerate(fila, start=1):
+                sheet.cell(row=fila_idx, column=tile_idx + startColumn - 1, value=tileValue)
+                if tileValue == 0:
                     color = "F0F0F0"
-                elif valor_celda == 1:
+                elif tileValue == 1:
                     color = "C0C0C0"
-                elif valor_celda == 2:
+                elif tileValue == 2:
                     color = "D2B48C"
-                elif valor_celda == 3:
+                elif tileValue == 3:
                     color = "FFB6C1"
-                elif valor_celda == 4:
+                elif tileValue == 4:
                     color = "98FB98"
-                elif valor_celda == 5:
+                elif tileValue == 5:
                     color = "ADD8E6"
-                relleno = PatternFill(start_color=color, end_color=color, fill_type="solid")
-                hoja.cell(row=fila_idx, column=celda_idx + columna_inicio - 1).fill = relleno
+                filler = PatternFill(start_color=color, end_color=color, fill_type="solid")
+                sheet.cell(row=fila_idx, column=tile_idx + startColumn - 1).fill = filler
 
-        if columna_inicio == 1: 
-            hoja.cell(row=lastRow, column=middleColumn,value=map.move)
-        columna_inicio += len(map.dungeon[0]) + 1
-        if columna_inicio != 1:
-            hoja.cell(row=lastRow, column=columna_inicio - middleColumn,value=map.move)
+        if startColumn == 1: 
+            sheet.cell(row=lastRow, column=middleColumn,value=map.move)
+        startColumn += len(map.dungeon[0]) + 1
+        if startColumn != 1:
+            sheet.cell(row=lastRow, column=startColumn - middleColumn,value=map.move)
 
 
     now = datetime.now()
-    formato_fecha = now.strftime("%d-%m")
-    ExperimentFolder = "Results/Experiment " + formato_fecha
+    dateFormat = now.strftime("%d-%m")
+    ExperimentFolder = "Results/Experiment " + dateFormat
     solutionsFolder = os.path.join(ExperimentFolder,"Solutions")
 
-    crear_carpeta_si_no_existe(solutionsFolder)
+    createFolder(solutionsFolder)
 
-    nFile= obtener_numero_siguiente_carpeta(solutionsFolder)
+    nFile= getFileNumber(solutionsFolder)
     dungeonName = f"Solution_{nFile}.xlsx"
     excelFileName = os.path.join(solutionsFolder,dungeonName)
 
