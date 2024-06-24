@@ -10,21 +10,21 @@ channels = 6
 width = 10
 height = 10
 
-neuronsG = 48
-neuronsD = 6
+neuronsG = 54
+neuronsD = 8
 
 dataSet = csvReader.load_data_from_folderTor(channels)
-
-epochs = 2000
+stepSize =500
+epochs = 3000
 batch_size = 128
-latent_dim = 100
+latent_dim = 36
 n_critic = 10
 matrixDim = (channels, width, height)
-lrG=0.0005
-lrD=0.0001
+lrG=0.006
+lrD=0.004
 # Inicializar los modelos
 generator, discriminator, optimizer_g,scheduler_g, optimizer_d,scheduler_d = Dcgan.get_gan(neuronsG,neuronsD, 
-                                                                   latent_dim, matrixDim,lrG,lrD)
+                                                                   latent_dim, matrixDim,lrG,lrD,n_critic, stepSize)
 
 
 # Entrenar el modelo

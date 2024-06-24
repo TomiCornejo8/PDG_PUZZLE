@@ -27,17 +27,17 @@ def gradient_penalty(discriminator, real_samples, fake_samples):
 def build_dcgan(generator, discriminator):
     return generator, discriminator
 
-def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD):
+def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD,n_critic, stepSize):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     generator = modelDc.Generator(latent_dim, matrixDim[0], matrixDim[1], matrixDim[1], neuronsG).to(device)
     discriminator = modelDc.Discriminator(matrixDim, neuronsD).to(device)
 
     optimizer_g = torch.optim.Adam(generator.parameters(), lr=lrG, betas=(0.5, 0.999))
-    scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=250, gamma=0.1)
+    scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=stepSize, gamma=0.1)
 
     optimizer_d = torch.optim.Adam(generator.parameters(), lr=lrD, betas=(0.5, 0.999))
-    scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=2500, gamma=0.1)
+    scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=n_critic * stepSize, gamma=0.1)
     #torch.optim.RMSprop(discriminator.parameters(), lr=lrD, alpha=0.9, eps=1e-7)
     return generator, discriminator, optimizer_g,scheduler_g, optimizer_d,scheduler_d
 
@@ -74,7 +74,7 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
             optimizer_d.zero_grad()
             d_loss_real = discriminator(real_imgs).to(device)
             d_loss_fake = discriminator(gen_imgs).to(device)
-            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 10 * gp
+            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 5 * gp
             d_loss.backward()
 
             torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm)
