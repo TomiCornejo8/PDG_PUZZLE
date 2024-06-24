@@ -74,14 +74,14 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(neurons, neurons // 2, 4, stride=2, padding=1),
             nn.BatchNorm2d(neurons // 2),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout(0.2),
+            nn.Dropout(0.3),
             ResidualBlock(neurons // 2),
             AttentionBlock(neurons // 2),
             
             nn.ConvTranspose2d(neurons // 2, neurons // 4, 4, stride=2, padding=1),
             nn.BatchNorm2d(neurons // 4),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             ResidualBlock(neurons // 4),
             AttentionBlock(neurons // 4),
             

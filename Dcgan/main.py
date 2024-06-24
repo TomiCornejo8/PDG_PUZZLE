@@ -10,13 +10,13 @@ channels = 6
 width = 10
 height = 10
 
-neuronsG = 54
+neuronsG = 66
 neuronsD = 8
 
 dataSet = csvReader.load_data_from_folderTor(channels)
 stepSize =500
 epochs = 3000
-batch_size = 128
+batch_size = 120
 latent_dim = 36
 n_critic = 10
 matrixDim = (channels, width, height)
