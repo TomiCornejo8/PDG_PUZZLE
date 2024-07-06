@@ -119,28 +119,25 @@ class Discriminator(nn.Module):
 
         self.layers.append(nn.Sequential(
             nn.Conv2d(img_shape[0], neurons * 4, 5, stride=1, padding=1),
-            nn.BatchNorm2d(neurons * 4),
             nn.LeakyReLU(0.2),
             nn.Dropout(0.3)
         ))
 
         self.layers.append(nn.Sequential(
             nn.Conv2d(neurons * 4, neurons * 8, 3, stride=2, padding=1),
-            nn.BatchNorm2d(neurons * 8),
             nn.LeakyReLU(0.2),
             nn.Dropout(0.3)
         ))
 
         self.layers.append(nn.Sequential(
             nn.Conv2d(neurons * 8, neurons * 16, 3, stride=2, padding=1),
-            nn.BatchNorm2d(neurons * 16),
             nn.LeakyReLU(0.2),
             nn.Dropout(0.3)
         ))
 
         final_size = neurons * 4 * 16 
         self.final_layer = nn.Linear(final_size, 1)
-        self.apply(WeightClippingConstraint(clip_value))
+        #self.apply(WeightClippingConstraint(clip_value))
         
         # Inicialización de pesos
         self.apply(weights_init)

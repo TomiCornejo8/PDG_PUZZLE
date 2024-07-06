@@ -33,17 +33,17 @@ def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD,n_critic, stepSize
     generator = modelDc.Generator(latent_dim, matrixDim[0], matrixDim[1], matrixDim[1], neuronsG).to(device)
     discriminator = modelDc.Discriminator(matrixDim, neuronsD).to(device)
 
-    optimizer_g = torch.optim.Adam(generator.parameters(), lr=lrG, betas=(0.5, 0.999))
-    scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=stepSize, gamma=0.1)
+    optimizer_g = torch.optim.Adam(generator.parameters(), lr=lrG, betas=(0.1, 0.9))
+    #scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=stepSize, gamma=0.1)
 
-    optimizer_d = torch.optim.Adam(generator.parameters(), lr=lrD, betas=(0.5, 0.999))
-    scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=n_critic * stepSize, gamma=0.1)
+    optimizer_d = torch.optim.Adam(discriminator.parameters(), lr=lrD, betas=(0.1, 0.9))
+    #scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=n_critic * stepSize, gamma=0.1)
     #torch.optim.RMSprop(discriminator.parameters(), lr=lrD, alpha=0.9, eps=1e-7)
-    return generator, discriminator, optimizer_g,scheduler_g, optimizer_d,scheduler_d
+    return generator, discriminator, optimizer_g,None, optimizer_d,None
 
 def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
                  optimizer_d, optimizer_g,scheduler_g,scheduler_d,matrixDim, n_critic=5):
-    max_norm = 1.0
+    max_norm = 2.0
     gpu_memory_fraction = 0.7
     torch.backends.cudnn.deterministic = True
 # Obtén el ID de la GPU (0 si solo tienes una GPU)
@@ -74,9 +74,8 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
             optimizer_d.zero_grad()
             d_loss_real = discriminator(real_imgs).to(device)
             d_loss_fake = discriminator(gen_imgs).to(device)
-            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 5 * gp
+            d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 10 * gp
             d_loss.backward()
-
             torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm)
 
             discriminator_gradients.append(get_gradients(discriminator))
@@ -88,20 +87,19 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
         optimizer_g.zero_grad()
         gen_imgs = generator(noise).to(device)
         g_loss = -torch.mean(discriminator(gen_imgs))
-        g_loss += diversity_penalty(gen_imgs)
+        #g_loss += diversity_penalty(gen_imgs)
         g_loss.backward()
         torch.nn.utils.clip_grad_norm_(generator.parameters(), max_norm)
-
         generator_gradients.append(get_gradients(generator))
 
         optimizer_g.step()
 
-        scheduler_d.step()
-        scheduler_g.step()
+        """ scheduler_d.step()
+        scheduler_g.step() """
 
         print(f"{epoch} [D loss: {d_loss.item()}] [G loss: {g_loss.item()}]")
 
-        if epoch % 100 == 0:
+        if epoch % 500 == 0:
             color.plot_gradients(generator_gradients, discriminator_gradients, epoch)
             color.save_images(epoch, generator, discriminator, latent_dim)
 
