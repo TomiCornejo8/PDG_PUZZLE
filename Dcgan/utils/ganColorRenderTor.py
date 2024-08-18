@@ -53,7 +53,18 @@ def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2
     plt.savefig(f"Dcgan/Maps/genImg_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
     plt.close()
 
+def save_img(image, figsize=(18, 6)):
 
+    nro = len(os.listdir("Dcgan/Mapas")) + 1
+    
+    plt.figure(figsize=figsize)
+    color_img = matrix_to_color_image(image)
+    plt.imshow(color_img)
+    plt.axis('off')
+    createFolder("Dcgan/Mapas")
+    plt.tight_layout()
+    plt.savefig(f"Dcgan/Mapas/imagen{nro}.png")
+    plt.close()
 
 def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     gen_grads = list(map(list, zip(*generator_gradients)))
@@ -79,3 +90,14 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     plt.legend()
     plt.savefig(f'Dcgan/Gradients/disc_gradients.png')
     plt.close()
+
+
+def fixMap(map):
+    print(map[4])
+    doorCoor = np.unravel_index(np.argmax(map[4]), (10,10))
+    print(map[5])
+    playerCoor = np.unravel_index(np.argmax(map[5]), (10,10))
+    print(f'Door: {doorCoor} Player: {playerCoor}')
+    map[4][doorCoor[0],doorCoor[1]]=1.0
+    map[5][playerCoor[0],playerCoor[1]]=1.0
+    return map

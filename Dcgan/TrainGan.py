@@ -5,13 +5,6 @@ import os
 import numpy as np
 from torchsummary import summary
 
-# Función de penalización por diversidad
-def diversity_penalty(fake_samples):
-    return torch.mean((fake_samples[:-1] - fake_samples[1:]).pow(2).sum(1).mean(1))
-
-def wasserstein_loss(y_true, y_pred):
-    return torch.mean(y_true * y_pred)
-
 def gradient_penalty(discriminator, real_samples, fake_samples):
     alpha = torch.rand(real_samples.size(0), 1, 1, 1).to(real_samples.device)
     interpolated = alpha * real_samples + (1 - alpha) * fake_samples
@@ -38,7 +31,6 @@ def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD,n_critic, stepSize
 
     optimizer_d = torch.optim.Adam(discriminator.parameters(), lr=lrD, betas=(0.1, 0.9))
     #scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=n_critic * stepSize, gamma=0.1)
-    #torch.optim.RMSprop(discriminator.parameters(), lr=lrD, alpha=0.9, eps=1e-7)
     return generator, discriminator, optimizer_g,None, optimizer_d,None
 
 def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
@@ -50,11 +42,14 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
     gpu_id = 0
     # Configura la GPU para utilizar solo un porcentaje específico de su memoria
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-    torch.cuda.set_per_process_memory_fraction(gpu_memory_fraction, device=gpu_id)
+    print(os.environ["CUDA_VISIBLE_DEVICES"])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
     if torch.cuda.is_available():
         print("Using GPU")
         x = torch.tensor([1.0], device=device)
+    torch.cuda.set_per_process_memory_fraction(gpu_memory_fraction, device=gpu_id)
+
         
     summary(generator, (latent_dim,))
     summary(discriminator, (matrixDim))
@@ -76,7 +71,7 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
             d_loss_fake = discriminator(gen_imgs).to(device)
             d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 10 * gp
             d_loss.backward()
-            torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm)
+            #torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm)
 
             discriminator_gradients.append(get_gradients(discriminator))
 
@@ -87,19 +82,17 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
         optimizer_g.zero_grad()
         gen_imgs = generator(noise).to(device)
         g_loss = -torch.mean(discriminator(gen_imgs))
-        #g_loss += diversity_penalty(gen_imgs)
         g_loss.backward()
-        torch.nn.utils.clip_grad_norm_(generator.parameters(), max_norm)
+        #torch.nn.utils.clip_grad_norm_(generator.parameters(), max_norm)
         generator_gradients.append(get_gradients(generator))
 
         optimizer_g.step()
 
-        """ scheduler_d.step()
-        scheduler_g.step() """
 
         print(f"{epoch} [D loss: {d_loss.item()}] [G loss: {g_loss.item()}]")
 
         if epoch % 500 == 0:
+            saveWeights(generator, discriminator,optimizer_g,optimizer_d,epoch)
             color.plot_gradients(generator_gradients, discriminator_gradients, epoch)
             color.save_images(epoch, generator, discriminator, latent_dim)
 
@@ -109,3 +102,25 @@ def get_gradients(model):
         if param.grad is not None:
             gradients.append(param.grad.norm().item())
     return gradients
+
+def saveWeights(generator, discriminator,optiG,optiD,epoch):
+    torch.save({
+    'generator_state_dict': generator.state_dict(),
+    'discriminator_state_dict': discriminator.state_dict(),
+    'optimizer_G_state_dict': optiG.state_dict(),
+    'optimizer_D_state_dict': optiD.state_dict(),
+    'epoch': epoch  # si quieres guardar la época actual
+}, f'Dcgan/weights/weights{epoch}.pth')
+    
+def getWeights( generator, discriminator, optiG,optiD):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load('Dcgan/weights/weights12000.pth')
+    generator.load_state_dict(checkpoint['generator_state_dict'])
+    discriminator.load_state_dict(checkpoint['discriminator_state_dict'])
+    optiG.load_state_dict(checkpoint['optimizer_G_state_dict'])
+    optiD.load_state_dict(checkpoint['optimizer_D_state_dict'])
+    epoch = checkpoint['epoch']  # si necesitas reanudar desde la última época guardada
+    # Asegúrate de que los modelos y los optimizadores estén en el dispositivo correcto
+    generator = generator.to(device)
+    discriminator = discriminator.to(device)
+    return generator, discriminator, optiG, optiD,device
