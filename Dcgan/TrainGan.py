@@ -71,7 +71,6 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
             d_loss_fake = discriminator(gen_imgs).to(device)
             d_loss = torch.mean(d_loss_fake) - torch.mean(d_loss_real) + 10 * gp
             d_loss.backward()
-            #torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_norm)
 
             discriminator_gradients.append(get_gradients(discriminator))
 
@@ -83,7 +82,6 @@ def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
         gen_imgs = generator(noise).to(device)
         g_loss = -torch.mean(discriminator(gen_imgs))
         g_loss.backward()
-        #torch.nn.utils.clip_grad_norm_(generator.parameters(), max_norm)
         generator_gradients.append(get_gradients(generator))
 
         optimizer_g.step()
@@ -114,9 +112,9 @@ def saveWeights(generator, discriminator,optiG,optiD,epoch):
     
 def getWeights( generator, discriminator, optiG,optiD):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    checkpoint = torch.load('Dcgan/weights/weights12000.pth')
-    generator.load_state_dict(checkpoint['generator_state_dict'])
-    discriminator.load_state_dict(checkpoint['discriminator_state_dict'])
+    checkpoint = torch.load('Dcgan/weights/weights7000.pth')
+    generator.load_state_dict(checkpoint['generator_state_dict'], strict=False)
+    discriminator.load_state_dict(checkpoint['discriminator_state_dict'], strict=False)
     optiG.load_state_dict(checkpoint['optimizer_G_state_dict'])
     optiD.load_state_dict(checkpoint['optimizer_D_state_dict'])
     epoch = checkpoint['epoch']  # si necesitas reanudar desde la última época guardada

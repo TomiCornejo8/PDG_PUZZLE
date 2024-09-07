@@ -92,12 +92,4 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
     plt.close()
 
 
-def fixMap(map):
-    print(map[4])
-    doorCoor = np.unravel_index(np.argmax(map[4]), (10,10))
-    print(map[5])
-    playerCoor = np.unravel_index(np.argmax(map[5]), (10,10))
-    print(f'Door: {doorCoor} Player: {playerCoor}')
-    map[4][doorCoor[0],doorCoor[1]]=1.0
-    map[5][playerCoor[0],playerCoor[1]]=1.0
-    return map
+
