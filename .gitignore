@@ -1,4 +1,4 @@
 env
-results
+dungeon_*.txt
 __pycache__/
 *.pyc

@@ -1,0 +1,60 @@
+Experiment n:1.1
+Maps with doors:2 Maps with players:7
+Maps solved:0 Maps solved with fixed doors and players:4
+Time elapsed:4.382974147796631
+Experiment n:1.2
+Maps with doors:2 Maps with players:5
+Maps solved:0 Maps solved with fixed doors and players:1
+Time elapsed:4.840782880783081
+Experiment n:1.3
+Maps with doors:2 Maps with players:6
+Maps solved:0 Maps solved with fixed doors and players:3
+Time elapsed:2.3391273021698
+Experiment n:1.4
+Maps with doors:1 Maps with players:7
+Maps solved:0 Maps solved with fixed doors and players:4
+Time elapsed:1.8707032203674316
+Experiment n:1.5
+Maps with doors:2 Maps with players:5
+Maps solved:0 Maps solved with fixed doors and players:5
+Time elapsed:11.992505073547363
+Experiment n:2.1
+Maps with doors:29 Maps with players:57
+Maps solved:3 Maps solved with fixed doors and players:28
+Time elapsed:39.01136875152588
+Experiment n:2.2
+Maps with doors:25 Maps with players:62
+Maps solved:7 Maps solved with fixed doors and players:35
+Time elapsed:32.86472821235657
+Experiment n:2.3
+Maps with doors:31 Maps with players:61
+Maps solved:8 Maps solved with fixed doors and players:29
+Time elapsed:80.17723393440247
+Experiment n:2.4
+Maps with doors:22 Maps with players:54
+Maps solved:4 Maps solved with fixed doors and players:22
+Time elapsed:70.54832530021667
+Experiment n:2.5
+Maps with doors:23 Maps with players:49
+Maps solved:5 Maps solved with fixed doors and players:28
+Time elapsed:90.68397617340088
+Experiment n:3.1
+Maps with doors:251 Maps with players:601
+Maps solved:53 Maps solved with fixed doors and players:309
+Time elapsed:714.8716411590576
+Experiment n:3.2
+Maps with doors:242 Maps with players:559
+Maps solved:42 Maps solved with fixed doors and players:317
+Time elapsed:688.0192487239838
+Experiment n:3.3
+Maps with doors:269 Maps with players:560
+Maps solved:55 Maps solved with fixed doors and players:301
+Time elapsed:903.3213322162628
+Experiment n:3.4
+Maps with doors:257 Maps with players:572
+Maps solved:49 Maps solved with fixed doors and players:315
+Time elapsed:737.7567639350891
+Experiment n:3.5
+Maps with doors:280 Maps with players:562
+Maps solved:50 Maps solved with fixed doors and players:305
+Time elapsed:717.046373128891

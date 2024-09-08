@@ -1,0 +1,4 @@
+Number of solutions:4,Minimum moves:18,solver Time:0.25724244117736816, Matrix file:dungeon_1
+Number of solutions:8,Minimum moves:16,solver Time:0.7673003673553467, Matrix file:dungeon_2
+Number of solutions:5,Minimum moves:16,solver Time:1.7752723693847656, Matrix file:dungeon_3
+Number of solutions:2,Minimum moves:10,solver Time:0.07781744003295898, Matrix file:dungeon_4
