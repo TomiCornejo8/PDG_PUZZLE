@@ -27,15 +27,12 @@ def get_gan(neuronsG,neuronsD, latent_dim, matrixDim, lrG,lrD,n_critic, stepSize
     discriminator = modelDc.Discriminator(matrixDim, neuronsD).to(device)
 
     optimizer_g = torch.optim.Adam(generator.parameters(), lr=lrG, betas=(0.1, 0.9))
-    #scheduler_g = torch.optim.lr_scheduler.StepLR(optimizer_g, step_size=stepSize, gamma=0.1)
 
     optimizer_d = torch.optim.Adam(discriminator.parameters(), lr=lrD, betas=(0.1, 0.9))
-    #scheduler_d = torch.optim.lr_scheduler.StepLR(optimizer_d, step_size=n_critic * stepSize, gamma=0.1)
     return generator, discriminator, optimizer_g,None, optimizer_d,None
 
 def train_dcgan(generator, discriminator, data, epochs, batch_size, latent_dim,
                  optimizer_d, optimizer_g,scheduler_g,scheduler_d,matrixDim, n_critic=5):
-    max_norm = 2.0
     gpu_memory_fraction = 0.7
     torch.backends.cudnn.deterministic = True
 # Obtén el ID de la GPU (0 si solo tienes una GPU)

@@ -3,7 +3,7 @@ import numpy as np
 from anytree import Node
 from collections import deque
 import copy
-
+import time as T
 # Internal
 from . import mechanics as M
 
@@ -33,7 +33,7 @@ def solveGame(dungeon):
     memory.append(hashDungeon(dungeon))
     
     solutions = []
-        
+    time=T.time()
     while states:
         currentState = states.popleft()
         currentDungeon = currentState.name
@@ -45,6 +45,8 @@ def solveGame(dungeon):
                 solutions.append(getRoute(newDungeon,currentState))
             else:
                 states,memory = setState(states,memory,newDungeon,currentState)
+        if T.time()-time>10:
+            break
     return solutions
 
 def nSolutions(dungeon):

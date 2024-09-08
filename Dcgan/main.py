@@ -38,14 +38,27 @@ generator, discriminator,optimizer_g,optimizer_d,device=Dcgan.getWeights(generat
 
 
 
-nMaps=[10,10,100,100,200,200,1000]
+nMaps=[10,100,1000]
+results=[]
+for i in range(0,len(nMaps)):
+    timeI=[]
+    nSols=[]
+    nMoves=[]
+    means=[]
+    solvT=[]
+    for j in range(1,6):
+        print(f"Inicio experimentos {i+1}.{j} tamaño {nMaps[i]}")
+        inicioL = T.time()
+        noise = torch.randn((nMaps[i], latent_dim),device=device)
+        gen_imgs = generator(noise).to(device)
+        auxT,auxS,auxM,solvTime=exp.experiment(gen_imgs,f"{i+1}.{j}",inicioL)
+        timeI.extend([auxT-inicioL])
+        nSols.extend(auxS)
+        nMoves.extend(auxM)
+        solvT.extend(solvTime)
+        print(f"Experimento {i+1}.{j} finalizado en {auxT-inicioL} segundos")
+    results=exp.saveMetricResults(results,i,nMoves,nSols,timeI,solvT)
+    exp.saveMetrix(results)
+    
 
-for i in range(0,len(nMaps)-3):
-    print("Inicio experimentos")
-    inicioL = T.time()
-    noise = torch.randn((nMaps[i], latent_dim),device=device)
-    gen_imgs = generator(noise).to(device)
-    exp.experiment(gen_imgs,i+1)
-    finL=T.time()
-    print(f"Experimento {i+1} finalizado en {finL-inicioL} segundos")
 

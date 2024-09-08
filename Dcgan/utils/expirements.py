@@ -1,14 +1,16 @@
 import numpy as np
 from collections import namedtuple
 import os
+import time as T
+import pandas as pd
 from . import solver
 
 def solveMaps(maps,fixedbool=True):
     results = []
-    Result = namedtuple("Result", "nSol, nMoves")
+    Result = namedtuple("Result", "nSol, nMoves,solvTime")
     sMaps=[]
     for i,map in enumerate(maps):
-        nSol,nMoves=0,0
+        nSol,nMoves,iTime,fTime=0,0,T.time(),0
         if fixedbool:
             map = np.argmax(map.cpu().detach().numpy(), axis=0)
         nplayers=np.column_stack(np.where(map == 5))
@@ -16,8 +18,9 @@ def solveMaps(maps,fixedbool=True):
         if len(nplayers) == 1 and len(ndoors) == 1:
             print(f"Start solving map {i}")
             nSol,nMoves=solver.nSolutions(map)
+            fTime=T.time()-iTime
         if nSol>0:
-            results.append(Result(nSol=nSol, nMoves=nMoves))
+            results.append(Result(nSol=nSol, nMoves=nMoves,solvTime=fTime))
             sMaps.append(map)
     return results,sMaps
 
@@ -75,7 +78,7 @@ def fixMaps(maps):
 def save_matrix_to_file(matrix, filename):
     with open(filename, 'w') as file:
         for row in matrix:
-            line = ' '.join(map(str, row))
+            line = ','.join(map(str, row))
             file.write(line + '\n')
 
 def save_matrices_to_files(matrices, base_filename):
@@ -88,7 +91,7 @@ def save_data_and_matrices(data_list, matrices, base_filename):
     with open(f"{base_filename}dungeonResults.txt", 'w') as file:
         for index, data in enumerate(data_list):
             matrix_file = f"dungeon_{index + 1}"
-            file.write(f"Number of solutions:{data.nSol}, Minimum moves: {data.nMoves} , Matrix file: {matrix_file} \n")
+            file.write(f"Number of solutions:{data.nSol},Minimum moves:{data.nMoves},solver Time:{data.solvTime}, Matrix file:{matrix_file}\n")
 
 def createFolder(nombre_carpeta):
     if not os.path.exists(nombre_carpeta):
@@ -98,8 +101,64 @@ def saveDoorAndplayerData(datos, filename):
     with open(filename, 'a') as file:
         for line in datos:
             file.write(line + '\n')
+def bubble_sort(data,matrix):
+    n = len(data)
+    Result = namedtuple("Result", "nSol, nMoves,solvTime")
+    # Recorremos todos los elementos del arreglo
+    for i in range(n):
+        # Últimos elementos ya están ordenados
+        for j in range(0, n - i - 1):
+            # Intercambiar si el elemento encontrado es mayor que el siguiente
+            if data[j].nMoves < data[j + 1].nMoves:
+                data[j], data[j + 1] =Result(data[j + 1].nSol,data[j + 1].nMoves,data[j + 1].solvTime) , Result(data[j].nSol,data[j].nMoves,data[j].solvTime)
+                matrix[j], matrix[j + 1] = matrix[j + 1], matrix[j]
+    return data,matrix
 
-def experiment(maps,i):
+def calMetrix(datos):
+    if len(datos) == 0:
+        return None, None, None 
+    else:
+        mean = np.mean(datos)
+        var = np.var(datos)
+        std = np.std(datos)
+        return mean,var,std
+
+def saveMetrix(results):
+    df_resultados = pd.DataFrame(results)
+    df_resultados.to_excel('Dcgan/results/resultados_experimentos.xlsx', index=False)
+
+    
+def saveMetricResults(results,i,nMoves,nSols,timeI,solvT):
+    mov_media, mov_varianza, mov_desv_std = calMetrix(nMoves)
+    sol_media, sol_varianza, sol_desv_std = calMetrix(nSols)
+    tiempo_media, tiempo_varianza, tiempo_desv_std = calMetrix(timeI)
+    solv_media, solv_varianza, solv_desv_std = calMetrix(solvT)
+    results.append({
+            'Experimento': f'{i+1}',
+            'Min_Moves_Mean': mov_media,
+            'Min_Moves_Var': mov_varianza,
+            'Min_Moves_Std': mov_desv_std,
+            "Max_Min_Moves": max(nMoves),
+            "Min_Min_Moves": min(nMoves),
+            'Nsol_Mean': sol_media,
+            'Nsol_Var': sol_varianza,
+            'Nsol_Std': sol_desv_std,
+            "Max_Nsol": max(nSols),
+            "Min_Nsol": min(nSols),
+            'Mean_Time': tiempo_media,
+            'Var_Time': tiempo_varianza,
+            'Std_Time': tiempo_desv_std,
+            "Max_Time": max(timeI),
+            "Min_Time": min(timeI),
+            'Solv_Time_Mean': solv_media,
+            'Solv_Time_Var': solv_varianza,
+            'Solv_Time_Std': solv_desv_std,
+            "Max_Solv_Time": max(solvT),
+            "Min_Solv_Time": min(solvT)
+        })
+    return results
+
+def experiment(maps,i,localTime):
     fixedMaps = fixMaps(maps)
     resultsPath= f"Dcgan/results/resultsGan.txt"
     dungeonsPath = f"Dcgan/results/dungeons{i}"
@@ -108,13 +167,25 @@ def experiment(maps,i):
     createFolder(f"{dungeonsPath}/fixedDungeons")
     mapNdoors, mapNplayers = getMapsWoDoP(maps)
     rsolvedmaps,sMaps = solveMaps(maps)
+    rsolvedmaps,sMaps=bubble_sort(rsolvedmaps,sMaps)
     rsolvedFixedMaps,sFixedMaps = solveMaps(fixedMaps,False)
-    results=[f"Experiment n:{i}",f"Maps with doors: {mapNdoors} Maps with players: {mapNplayers}", 
-             f"Maps solved: {len(sMaps)} Maps solved with fixed doors and players: {len(sFixedMaps)}"]
+    rsolvedFixedMaps,sFixedMaps=bubble_sort(rsolvedFixedMaps,sFixedMaps)
+    finL=T.time()
+    results=[f"Experiment n:{i}",f"Maps with doors:{mapNdoors} Maps with players:{mapNplayers}", 
+             f"Maps solved:{len(sMaps)} Maps solved with fixed doors and players:{len(sFixedMaps)}",
+             f"Time elapsed:{finL-localTime}"]
     saveDoorAndplayerData(results, resultsPath)
     save_data_and_matrices(rsolvedmaps, sMaps, f"{dungeonsPath}/dungeons/")
     save_data_and_matrices(rsolvedFixedMaps, sFixedMaps, f"{dungeonsPath}/fixedDungeons/")
     print("Experiment finished")
+
+    if len(rsolvedFixedMaps):
+        nsols,nmoves,solvTime=zip(*rsolvedFixedMaps)
+        nsols,nmoves,solvTime=list(nsols),list(nmoves),list(solvTime)
+    else:
+        nsols,nmoves,solvTime=[],[],[]
+
+    return finL,nsols,nmoves,solvTime
 
 
 
