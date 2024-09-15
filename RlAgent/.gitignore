@@ -1,0 +1,6 @@
+env
+dungeon_*.txt
+dungeon_*.xlsx
+Results/
+__pycache__/
+*.pyc

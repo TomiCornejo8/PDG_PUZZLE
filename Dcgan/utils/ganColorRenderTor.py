@@ -53,14 +53,25 @@ def save_images(epoch, generator, discriminator, latent_dim, examples=10, dim=(2
     plt.savefig(f"Dcgan/Maps/genImg_epoch_{epoch}_TrueLabel_{trueLabel}_Samples_{examples}.png")
     plt.close()
 
-def save_img(image, figsize=(18, 6)):
+def save_img(image, figsize=(8, 5)):
 
     nro = len(os.listdir("Dcgan/Mapas")) + 1
+    tittle=["Mejor Mapa","Mas Soluciones","Peor Mapa"]
+    footer=[[3,30],[5,24],[2,2]]
     
     plt.figure(figsize=figsize)
-    color_img = matrix_to_color_image(image)
-    plt.imshow(color_img)
-    plt.axis('off')
+    for i,map in enumerate(image):
+        color_img = matrix_to_color(map)
+        axes = plt.subplot(1,3, i + 1)
+        plt.imshow(color_img)
+        plt.axis('off')
+        plt.text(0.5, 1.1 ,f"{tittle[i]} \n nSol:{footer[i][0]} minMoves:{footer[i][1]}", transform=axes.transAxes, ha="center", \
+                 fontsize=12,bbox={"facecolor":"orange", "alpha":0.5, "pad":5})
+        plt.text(0.5, -0.12,f"Fitness:{footer[i][1]-footer[i][0]}", transform=axes.transAxes, ha="center", \
+                 fontsize=12,bbox={"facecolor":"orange", "alpha":0.4, "pad":5})
+        if i==1:
+            plt.text(0.5, 1.4 ,"Experimento 3.5", transform=axes.transAxes, ha="center", fontsize=24,bbox={"facecolor":"white", "alpha":0.0, "pad":5})
+
     createFolder("Dcgan/Mapas")
     plt.tight_layout()
     plt.savefig(f"Dcgan/Mapas/imagen{nro}.png")
@@ -93,3 +104,5 @@ def plot_gradients(generator_gradients, discriminator_gradients, epoch):
 
 
 
+def matrix_to_color(matrix):
+    return np.array([[value_to_color(cell) for cell in row] for row in matrix])
