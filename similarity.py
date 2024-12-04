@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from itertools import combinations
 import os
 import glob
@@ -16,7 +17,7 @@ def read_solutions(folder_path):
         matrix = np.loadtxt(file, delimiter=',')
         matrices.append(matrix)
     
-    return matrices
+    return np.array(matrices)
 
 def matriz_a_secuencia(matriz):
     # Convertir la matriz a una secuencia (lista) de sus elementos
@@ -62,13 +63,43 @@ def promedio_distancia_edicion(matrices):
     promedio_porcentaje = np.mean(porcentajes)
     return promedio_porcentaje
 
-folder_path = 'results/Experiment 18-06/SolutionsCsv'
-matrices = read_solutions(folder_path)
+def promedios():
+    df = pd.read_csv("result.csv")
+    df['Group'] = df.index // 20
 
-start = T.time()
-print(f"Comienzo del calculo de autosimilitud entre {len(matrices)} mapas")
+    # Calcular el promedio y desviación estándar por grupo
+    promedios = df.groupby('Group').mean().round(2)  # Promedios
+    desviaciones = df.groupby('Group').std().round(2)  # Desviaciones estándar
 
-promedio = promedio_distancia_edicion(matrices)
-print(f"La autosimilitud de los mapas es: {promedio}")
+    # Mostrar resultados
+    print("Promedios por grupo:")
+    print(promedios)
 
-print(f"Se termino de ejecutar en {T.time() - start} segundos")
+    print("\nDesviaciones estándar por grupo:")
+    print(desviaciones)
+
+    # Calcular el valor mínimo y máximo para cada grupo
+    minimos = df.groupby('Group')['stop'].min().round(2)  # Mínimos por grupo
+    maximos = df.groupby('Group')['stop'].max().round(2)  # Máximos por grupo
+
+    # Mostrar resultados
+    print("Mínimos por grupo:")
+    print(minimos)
+
+    print("\nMáximos por grupo:")
+    print(maximos)
+
+def autosimilitud():
+    folder_path = 'results/Experiment 03-12/SolutionsCsv'
+    matrices = read_solutions(folder_path)
+
+    print(f"Autosimilitud:")
+    bloques = np.array_split(matrices, 200 // 20)
+    for i, bloque in enumerate(bloques):
+        promedio = promedio_distancia_edicion(bloque)
+        print(f"{i} {promedio:.2f}")
+
+    promedio = promedio_distancia_edicion(matrices)
+    print(f"Autosimilitud 200 mapas: {promedio:.2f}")
+
+promedios()
